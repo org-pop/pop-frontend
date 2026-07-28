@@ -1,0 +1,40 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@custom-variant dark (&:where(.dark, .dark *));
+
+* {
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+@theme {
+  --color-brand-bg: #F1EFF1;
+  --color-brand-purple: #fff;      /* primary */
+  --color-brand-purple-light: #AA6C9D; /* secondary */
+  --color-brand-purple-dark: #883877;  /* tertiary */
+}
+
+/* semantic tokens that actually flip between themes */
+:root {
+  --color-bg: var(--color-brand-bg);
+  --color-surface: #FFFFFF;
+  --color-text: #1A1A1A;
+  --color-primary: var(--color-brand-purple);
+  --color-secondary: var(--color-brand-purple-light);
+  --color-accent: var(--color-brand-purple-dark);
+}
+
+.dark {
+  --color-bg: #1A1420;
+  --color-surface: #241A2C;
+  --color-text: #F1EFF1;
+  --color-primary: var(--color-brand-purple-light);
+  --color-secondary: var(--color-brand-purple-dark);
+  --color-accent: var(--color-brand-purple);
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}

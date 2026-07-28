@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "vite",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,6 +9,10 @@
     "preview": "vite preview"
   },
   "devDependencies": {
-    "vite": "^8.0.16"
+    "vite": "^8.1.1"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "tailwindcss": "^4.3.3"
   }
 }
