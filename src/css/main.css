@@ -1,17 +1,21 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import "tailwindcss";
+@import "./components.css";
 @custom-variant dark (&:where(.dark, .dark *));
-
-* {
-  box-sizing: border-box;
-  font-family: "Inter", sans-serif;
-}
 
 @theme {
   --color-brand-bg: #F1EFF1;
-  --color-brand-purple: #fff;      /* primary */
-  --color-brand-purple-light: #AA6C9D; /* secondary */
-  --color-brand-purple-dark: #883877;  /* tertiary */
+  --color-brand-purple: #7E1267;
+  --color-brand-purple-light: #AA6C9D;
+  --color-brand-purple-dark: #883877;
+
+  /* these lines are what actually generate bg-primary, text-secondary, border-accent, etc. */
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-text: var(--color-text);
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
 }
 
 /* semantic tokens that actually flip between themes */
@@ -31,6 +35,11 @@
   --color-primary: var(--color-brand-purple-light);
   --color-secondary: var(--color-brand-purple-dark);
   --color-accent: var(--color-brand-purple);
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
 }
 
 body {

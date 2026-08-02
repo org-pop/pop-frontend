@@ -1,3 +1,5 @@
+import { store } from "./state/store.js";
+
 const routes = {};
 let container = null;
 
@@ -8,8 +10,8 @@ export function registerRoute(path, viewFn, meta = {}) {
 export function initRouter(containerEl) {
   container = containerEl;
 
-  // fires whenever the hash changes (link click, back/forward button, etc.)
-  window.addEventListener("hashchange", handleRouteChange);
+  // fires on back/forward button navigation
+  window.addEventListener("popstate", handleRouteChange);
 
   // intercept every internal link click instead of letting the browser navigate
   document.addEventListener("click", (e) => {
@@ -28,25 +30,27 @@ export function navigate(path) {
 }
 
 function handleRouteChange() {
-  const [path, queryString] = window.location.pathname.split("?");
+  const [path] = window.location.pathname.split("?");
   const match = matchRoute(path);
-
   const header = document.querySelector("nav-header");
 
   if (!match) {
     container.innerHTML = "<h2>404</h2>";
+    if (header) header.style.display = "";
     return;
   }
+
+  const { viewFn, meta } = match.route;
 
   if (meta.requiresAuth && !store.getState().user) {
-    navigate("/login");
+    navigate(`/login?redirect=${encodeURIComponent(path)}`);
     return;
   }
 
-  if (header) header.style.display = match.route.meta.hideHeader ? "none" : "";
+  if (header) header.style.display = meta.hideHeader ? "none" : "";
 
   const params = new URLSearchParams(window.location.search);
-  match.route.viewFn(container, { ...match.params, query: params });
+  viewFn(container, { ...match.params, query: params });
 }
 
 function matchRoute(path) {
