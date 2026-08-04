@@ -18,5 +18,3 @@ registerRoute("/product/:id", renderProduct);
 registerRoute("/cart", renderCart, { requiresAuth: true })
 
 initRouter(app);
-
-console.log(import.meta.env.API_KEY)
