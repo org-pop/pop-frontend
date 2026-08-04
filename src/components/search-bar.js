@@ -161,7 +161,7 @@ class SearchBar extends HTMLElement {
   goToProduct(id) {
     this.closeDropdown();
     this.input.value = "";
-    navigate(`/products/${id}`);
+    navigate(`/product/${id}`);
   }
 
   closeDropdown() {

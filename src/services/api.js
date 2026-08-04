@@ -1,4 +1,4 @@
-const API_KEY = import.meta.env.API_KEY;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 async function request(endpoint, { method = "GET", body, params } = {}) {
   const token = localStorage.getItem("token");

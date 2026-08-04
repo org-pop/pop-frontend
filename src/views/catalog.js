@@ -1,74 +1,58 @@
 import { productService } from "../services/product.js";
 import "../components/product-card.js";
 
-const FILTERS = [
-  { label: "Todos", value: null },
-  { label: "Novo", rarity: "COMUM" },
-  { label: "Raro", rarity: "RARO" },
-  { label: "Ultra", rarity: "ULTRA_RARO" },
-];
+export function renderCatalog(container, params) {
+  const searchTerm = params.query.get("name") || "";
 
-export function renderCatalog(container) {
-  let activeFilter = FILTERS[0];
+  container.innerHTML = `
+    <section class="flex flex-col gap-10 max-w-5xl mx-auto px-6 py-10 pt-27">
+      <h1 class="text-center text-lg font-bold text-primary">
+        ${searchTerm ? `Resultados para "${searchTerm}"` : "Catálogo completo"}
+      </h1>
 
-  function render() {
-    container.innerHTML = `
-      <section class="max-w-5xl mx-auto px-6 py-10">
-        <h1 class="text-center text-lg font-bold text-primary mb-6">Catálogo completo</h1>
+      <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-5 gap-y-10">
+        ${Array.from({ length: 8 })
+          .map(() => `<product-card data-loading="true"></product-card>`)
+          .join("")}
+      </div>
 
-        <div class="flex flex-wrap justify-center gap-3 mb-8">
-          ${FILTERS.map(
-            (f) => `
-            <button data-filter="${f.label}"
-                    class="px-5 py-1.5 text-sm font-medium transition-colors text-white ${f.label === activeFilter.label ? "bg-primary" : "bg-secondary hover:bg-secondary/80"}">
-              ${f.label}
-            </button>
-          `
-          ).join("")}
-        </div>
+      ${searchTerm ? `<nav class="text-center" ><a href="/catalog" class="text-primary font-bold pointer underline" >Ver catálogo completo</a></nav>` : ""}
+    </section>
+  `;
 
-        <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-8">
-          ${Array.from({ length: 8 })
-            .map(() => `<product-card data-loading="true"></product-card>`)
-            .join("")}
-        </div>
-      </section>
-    `;
+  loadProducts(container, searchTerm);
+}
 
-    container.querySelectorAll("[data-filter]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        activeFilter = FILTERS.find((f) => f.label === btn.dataset.filter);
-        render();
-        loadProducts();
-      });
-    });
-  }
+async function loadProducts(container, searchTerm) {
+  const grid = container.querySelector("#product-grid");
 
-  async function loadProducts() {
-    const grid = container.querySelector("#product-grid");
+  try {
+    const products = searchTerm
+      ? await productService.search(searchTerm)
+      : await productService.getAll();
 
-    try {
-      const products = activeFilter.rarity
-        ? await productService.getByyRarity(activeFilter.rarity)
-        : await productService.getAll();
-
-      grid.innerHTML = products
-        .map(
-          (p) => `
-          <product-card
-            data-id="${p.id}"
-            data-name="${p.name}"
-            data-price="${p.price}"
-            data-image="${p.imageUrl}">
-          </product-card>
-        `
-        )
-        .join("");
-    } catch (err) {
-      console.log(err)
+    if (products.length === 0) {
+      grid.innerHTML = `
+        <p class="col-span-full text-center text-text/60">
+          Nenhum produto encontrado${searchTerm ? ` para "${searchTerm}"` : ""}.
+        </p>
+      `;
+      return;
     }
-  }
 
-  render();
-  loadProducts();
+    grid.innerHTML = products
+      .map(
+        (p) => `
+        <product-card
+          data-id="${p.id}"
+          data-name="${p.name}"
+          data-price="${p.price}"
+          data-image="${p.imageUrl}">
+        </product-card>
+      `,
+      )
+      .join("");
+  } catch (err) {
+    console.error(err);
+  }
 }

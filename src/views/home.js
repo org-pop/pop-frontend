@@ -19,6 +19,6 @@ export async function renderHome(container) {
     const products = await productService.getAll();
     carousel.setProducts(products);
   } catch (err) {
-    console.log(err)
+    console.error(err);
   }
 }

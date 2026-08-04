@@ -35,7 +35,7 @@ function handleRouteChange() {
   const header = document.querySelector("nav-header");
 
   if (!match) {
-    container.innerHTML = "<h2>404</h2>";
+    container.innerHTML = `<section class="min-h-screen flex flex-col justify-center items-center"><h1 class="font-bold text-primary text-8xl">404</h1></section>`;
     if (header) header.style.display = "";
     return;
   }
