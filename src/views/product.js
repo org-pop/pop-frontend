@@ -89,7 +89,7 @@ function setupInteractions(container, product) {
     .addEventListener("click", async () => {
       const { user } = store.getState();
       if (!user) {
-        navigate(`/login?redirect=/products/${product.id}`);
+        navigate(`/login?redirect=/product/${product.id}`);
         return;
       }
 
@@ -113,7 +113,7 @@ async function loadRelated(container, product) {
   carousel.setLoading(4);
 
   try {
-    const related = await productService.byFranchise(product.franchise);
+    const related = await productService.getByFranchise(product.franchise);
     const filtered = related.filter((p) => p.id !== product.id);
     carousel.setProducts(filtered);
   } catch (err) {

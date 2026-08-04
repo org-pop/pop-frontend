@@ -30,7 +30,7 @@ class ProductCard extends HTMLElement {
     }
 
     this.innerHTML = `
-      <a href="/products/${id}" data-link class="flex flex-col group cursor-pointer">
+      <a href="/product/${id}" data-link class="flex flex-col group cursor-pointer">
         <div class="aspect-square bg-surface overflow-hidden rounded-md">
           <img src="${image}" alt="${name}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
         </div>
