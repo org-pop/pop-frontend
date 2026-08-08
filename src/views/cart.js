@@ -30,6 +30,8 @@ async function enrichWithProductData(cartItems) {
 
 let appliedCoupon = null;
 
+const SHIPPING_COST = 15.9;
+
 function render(container, user, cartItems) {
   container.innerHTML = `
     <div class="max-w-5xl mx-auto my-10 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 px-4">
@@ -94,7 +96,7 @@ function cartItemRow(item) {
 
 function orderSummary(cartItems) {
   const subtotal = calculateTotal(cartItems);
-  const shipping = 0;
+  const shipping = SHIPPING_COST;
   const discount = appliedCoupon?.value ?? 0;
   const total = subtotal + shipping - discount;
 
@@ -109,7 +111,7 @@ function orderSummary(cartItems) {
 
       <div class="flex justify-between text-sm mb-4">
         <span class="text-text/60">Frete</span>
-        <span id="summary-shipping">${shipping > 0 ? `R$ ${shipping.toFixed(2)}` : "A calcular"}</span>
+        <span id="summary-shipping">R$ ${shipping.toFixed(2)}</span>
       </div>
 
       <div class="mb-4">
@@ -146,23 +148,30 @@ function setupInteractions(container, user, cartItems) {
   container.querySelectorAll("[data-item-id]").forEach((row) => {
     const itemId = row.dataset.itemId;
     const item = cartItems.find((i) => String(i.id) === itemId);
+    const buttons = row.querySelectorAll("button");
 
     row
       .querySelector('[data-action="increase"]')
       .addEventListener("click", () =>
-        updateQuantity(container, user, item, item.quantity + 1),
+        runRowAction(buttons, () =>
+          updateQuantity(container, user, item, item.quantity + 1),
+        ),
       );
 
     row
       .querySelector('[data-action="decrease"]')
       .addEventListener("click", () => {
         if (item.quantity <= 1) return;
-        updateQuantity(container, user, item, item.quantity - 1);
+        runRowAction(buttons, () =>
+          updateQuantity(container, user, item, item.quantity - 1),
+        );
       });
 
     row
       .querySelector('[data-action="remove"]')
-      .addEventListener("click", () => removeItem(container, user, item));
+      .addEventListener("click", () =>
+        runRowAction(buttons, () => removeItem(container, user, item)),
+      );
   });
 
   const couponBtn = container.querySelector("#coupon-apply");
@@ -174,12 +183,29 @@ function setupInteractions(container, user, cartItems) {
   checkoutBtn?.addEventListener("click", () => navigate("/checkout"));
 }
 
+async function runRowAction(buttons, action) {
+  buttons.forEach((b) => (b.disabled = true));
+  try {
+    await action();
+  } finally {
+    buttons.forEach((b) => (b.disabled = false));
+  }
+}
+
+function isAlreadyGone(err) {
+  return /não encontrado/i.test(err.message);
+}
+
 async function updateQuantity(container, user, item, newQty) {
   try {
     await cartService.updateQuantity(user.id, item.id, newQty);
     item.quantity = newQty;
     renderCart(container); // re-fetch to keep totals in sync
   } catch (err) {
+    if (isAlreadyGone(err)) {
+      renderCart(container);
+      return;
+    }
     alert(err.message);
   }
 }
@@ -189,6 +215,10 @@ async function removeItem(container, user, item) {
     await cartService.removeItem(user.id, item.id);
     renderCart(container);
   } catch (err) {
+    if (isAlreadyGone(err)) {
+      renderCart(container);
+      return;
+    }
     alert(err.message);
   }
 }

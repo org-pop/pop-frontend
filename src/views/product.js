@@ -87,18 +87,22 @@ function setupInteractions(container, product) {
   container
     .querySelector("#add-to-cart-btn")
     .addEventListener("click", async () => {
-      const { user } = store.getState();
+      const { user, cart } = store.getState();
       if (!user) {
         navigate(`/login?redirect=/product/${product.id}`);
         return;
       }
 
+      store.setState({ cart: [...cart, { quantity: qty }] });
+
       try {
-        const updatedCart = await cartService.addItem(user.id, product.id, qty);
+        await cartService.addItem(user.id, product.id, qty);
+        const updatedCart = await cartService.get(user.id);
         store.setState({ cart: updatedCart });
         feedback.textContent = "Adicionado ao carrinho!";
         feedback.classList.remove("hidden");
       } catch (err) {
+        store.setState({ cart });
         feedback.textContent = err.message;
         feedback.classList.remove("hidden");
         feedback.classList.add("text-red-500");
