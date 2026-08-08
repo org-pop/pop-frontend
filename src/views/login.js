@@ -102,9 +102,10 @@ export function renderLogin(container, params) {
   }
 
   function onAuthSuccess(result) {
-    localStorage.setItem("token", result.token);
-    localStorage.setItem("user", JSON.stringify(result));
-    store.setState({ user: result });
+    const user = { ...result, id: result.userId };
+    localStorage.setItem("token", user.token);
+    localStorage.setItem("user", JSON.stringify(user));
+    store.setState({ user });
     navigate(redirectTo);
   }
 
