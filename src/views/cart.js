@@ -45,7 +45,7 @@ function render(container, user, cartItems) {
           </div>
         </header>
 
-        <div id="cart-items" class="divide-y divide-secondary/10">
+        <div id="cart-items" class="flex flex-col gap-4 p-6">
           ${
             cartItems.length === 0
               ? `<p class="text-center text-text/50 py-16">Seu carrinho está vazio.</p>`
@@ -64,7 +64,7 @@ function render(container, user, cartItems) {
 
 function cartItemRow(item) {
   return `
-    <div class="flex items-center gap-4 px-8 py-6" data-item-id="${item.id}">
+    <div class="flex items-center gap-4 p-4 border border-secondary/20 rounded-xl" data-item-id="${item.id}">
       <input type="checkbox" checked class="w-5 h-5 rounded border-secondary text-primary accent-primary shrink-0" />
 
       <div class="w-20 h-20 bg-bg rounded-lg overflow-hidden shrink-0">
@@ -79,7 +79,13 @@ function cartItemRow(item) {
           <button data-action="decrease" class="w-7 h-7 rounded-full border border-secondary text-primary hover:bg-secondary/10 transition-colors">−</button>
           <span class="qty-value text-sm text-text w-4 text-center">${item.quantity}</span>
           <button data-action="increase" class="w-7 h-7 rounded-full border border-secondary text-primary hover:bg-secondary/10 transition-colors">+</button>
-          <button data-action="remove" class="text-xs text-red-500 hover:underline ml-2">Remover</button>
+          <button data-action="remove" aria-label="Remover item" class="w-7 h-7 rounded-full border border-red-200 text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center ml-2">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"></path>
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
