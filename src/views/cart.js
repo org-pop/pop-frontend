@@ -28,46 +28,35 @@ async function enrichWithProductData(cartItems) {
   );
 }
 
+let appliedCoupon = null;
+
 function render(container, user, cartItems) {
   container.innerHTML = `
-    <section class="max-w-2xl mx-auto my-10 border border-secondary/40 rounded-2xl overflow-hidden bg-surface">
-      <header class="flex items-center gap-3 px-8 py-5 border-b border-secondary/20">
-        <svg class="w-6 h-6 text-primary" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M0.577816 0.033145C0.679561 0.0030607 0.786236 -0.00667994 0.891747 0.00447955C0.997258 0.015639 1.09954 0.0474799 1.19274 0.0981829C1.28594 0.148886 1.36824 0.217457 1.43493 0.299979C1.50162 0.382501 1.5514 0.477355 1.58142 0.579123L2.17368 2.58535H17.9546C19.936 2.58535 21.449 4.43435 20.8782 6.3652L19.0961 12.3957C18.717 13.6804 17.5121 14.5387 16.1725 14.5387H6.31302C4.97344 14.5387 3.76954 13.6804 3.38942 12.3957L0.0329391 1.0368C-0.0275304 0.831591 -0.00411943 0.610776 0.0980341 0.422813C0.200188 0.23485 0.372738 0.094019 0.577816 0.033145ZM4.30688 18.577C4.30688 17.9344 4.56215 17.3181 5.01652 16.8637C5.4709 16.4093 6.08717 16.154 6.72975 16.154C7.37234 16.154 7.9886 16.4093 8.44298 16.8637C8.89736 17.3181 9.15262 17.9344 9.15262 18.577C9.15262 19.2196 8.89736 19.8359 8.44298 20.2903C7.9886 20.7447 7.37234 21 6.72975 21C6.08717 21 5.4709 20.7447 5.01652 20.2903C4.56215 19.8359 4.30688 19.2196 4.30688 18.577ZM12.9215 18.577C12.9215 18.2588 12.9842 17.9438 13.106 17.6498C13.2277 17.3558 13.4062 17.0887 13.6312 16.8637C13.8562 16.6387 14.1233 16.4602 14.4172 16.3385C14.7112 16.2167 15.0262 16.154 15.3444 16.154C15.6626 16.154 15.9776 16.2167 16.2716 16.3385C16.5656 16.4602 16.8326 16.6387 17.0576 16.8637C17.2826 17.0887 17.4611 17.3558 17.5828 17.6498C17.7046 17.9438 17.7673 18.2588 17.7673 18.577C17.7673 19.2196 17.512 19.8359 17.0576 20.2903C16.6033 20.7447 15.987 21 15.3444 21C14.7018 21 14.0856 20.7447 13.6312 20.2903C13.1768 19.8359 12.9215 19.2196 12.9215 18.577Z" fill="currentColor"/>
-        </svg>
-        <div>
-          <p class="font-semibold text-primary text-sm">Meu carrinho</p>
-          <p class="text-xs text-text/50">Faça pedidos por aqui</p>
-        </div>
-      </header>
+    <div class="max-w-5xl mx-auto my-10 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 px-4">
 
-      <div id="cart-items" class="divide-y divide-secondary/10">
-        ${
-          cartItems.length === 0
-            ? `<p class="text-center text-text/50 py-16">Seu carrinho está vazio.</p>`
-            : cartItems.map((item) => cartItemRow(item)).join("")
-        }
-      </div>
-
-      ${
-        cartItems.length > 0
-          ? `
-        <div class="px-8 py-6 border-t border-secondary/20">
-          <div class="flex justify-between items-center mb-4">
-            <span class="text-sm text-text/60">Total</span>
-            <span id="cart-total" class="text-lg font-bold text-primary">
-              R$ ${calculateTotal(cartItems).toFixed(2)}
-            </span>
+      <section class="border border-secondary/40 rounded-2xl overflow-hidden bg-surface h-fit">
+        <header class="flex items-center gap-3 px-8 py-5 border-b border-secondary/20">
+          <svg class="w-6 h-6 text-primary" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0.577816 0.033145C0.679561 0.0030607 0.786236 -0.00667994 0.891747 0.00447955C0.997258 0.015639 1.09954 0.0474799 1.19274 0.0981829C1.28594 0.148886 1.36824 0.217457 1.43493 0.299979C1.50162 0.382501 1.5514 0.477355 1.58142 0.579123L2.17368 2.58535H17.9546C19.936 2.58535 21.449 4.43435 20.8782 6.3652L19.0961 12.3957C18.717 13.6804 17.5121 14.5387 16.1725 14.5387H6.31302C4.97344 14.5387 3.76954 13.6804 3.38942 12.3957L0.0329391 1.0368C-0.0275304 0.831591 -0.00411943 0.610776 0.0980341 0.422813C0.200188 0.23485 0.372738 0.094019 0.577816 0.033145ZM4.30688 18.577C4.30688 17.9344 4.56215 17.3181 5.01652 16.8637C5.4709 16.4093 6.08717 16.154 6.72975 16.154C7.37234 16.154 7.9886 16.4093 8.44298 16.8637C8.89736 17.3181 9.15262 17.9344 9.15262 18.577C9.15262 19.2196 8.89736 19.8359 8.44298 20.2903C7.9886 20.7447 7.37234 21 6.72975 21C6.08717 21 5.4709 20.7447 5.01652 20.2903C4.56215 19.8359 4.30688 19.2196 4.30688 18.577ZM12.9215 18.577C12.9215 18.2588 12.9842 17.9438 13.106 17.6498C13.2277 17.3558 13.4062 17.0887 13.6312 16.8637C13.8562 16.6387 14.1233 16.4602 14.4172 16.3385C14.7112 16.2167 15.0262 16.154 15.3444 16.154C15.6626 16.154 15.9776 16.2167 16.2716 16.3385C16.5656 16.4602 16.8326 16.6387 17.0576 16.8637C17.2826 17.0887 17.4611 17.3558 17.5828 17.6498C17.7046 17.9438 17.7673 18.2588 17.7673 18.577C17.7673 19.2196 17.512 19.8359 17.0576 20.2903C16.6033 20.7447 15.987 21 15.3444 21C14.7018 21 14.0856 20.7447 13.6312 20.2903C13.1768 19.8359 12.9215 19.2196 12.9215 18.577Z" fill="currentColor"/>
+          </svg>
+          <div>
+            <p class="font-semibold text-primary text-sm">Meu carrinho</p>
+            <p class="text-xs text-text/50">Faça pedidos por aqui</p>
           </div>
-          <button id="checkout-btn"
-                  class="w-full bg-primary hover:bg-accent text-white py-3 rounded-full transition-colors">
-            Finalizar compra
-          </button>
+        </header>
+
+        <div id="cart-items" class="divide-y divide-secondary/10">
+          ${
+            cartItems.length === 0
+              ? `<p class="text-center text-text/50 py-16">Seu carrinho está vazio.</p>`
+              : cartItems.map((item) => cartItemRow(item)).join("")
+          }
         </div>
-      `
-          : ""
-      }
-    </section>
+      </section>
+
+      ${cartItems.length > 0 ? orderSummary(cartItems) : ""}
+
+    </div>
   `;
 
   setupInteractions(container, user, cartItems);
@@ -94,6 +83,49 @@ function cartItemRow(item) {
         </div>
       </div>
     </div>
+  `;
+}
+
+function orderSummary(cartItems) {
+  const subtotal = calculateTotal(cartItems);
+  const shipping = 0;
+  const discount = appliedCoupon?.value ?? 0;
+  const total = subtotal + shipping - discount;
+
+  return `
+    <aside class="border border-secondary/40 rounded-2xl bg-surface p-6 h-fit lg:sticky lg:top-6">
+      <p class="font-semibold text-primary text-sm mb-4">Resumo do pedido</p>
+
+      <div class="flex justify-between text-sm mb-2">
+        <span class="text-text/60">Subtotal (${cartItems.length} ${cartItems.length === 1 ? "item" : "itens"})</span>
+        <span id="summary-subtotal">R$ ${subtotal.toFixed(2)}</span>
+      </div>
+
+      <div class="flex justify-between text-sm mb-4">
+        <span class="text-text/60">Frete</span>
+        <span id="summary-shipping">${shipping > 0 ? `R$ ${shipping.toFixed(2)}` : "A calcular"}</span>
+      </div>
+
+      <div class="mb-4">
+        <label class="text-xs text-text/50 block mb-1">Cupom de desconto</label>
+        <div class="flex gap-2">
+          <input id="coupon-input" type="text" placeholder="Digite o código"
+                 class="flex-1 min-w-0 border border-secondary/40 rounded-lg px-3 py-1.5 text-sm bg-bg" />
+          <button id="coupon-apply" class="border border-secondary/40 rounded-lg px-3 text-sm text-primary hover:bg-secondary/10 transition-colors">Aplicar</button>
+        </div>
+        <p id="coupon-feedback" class="text-xs mt-1"></p>
+      </div>
+
+      <div class="border-t border-secondary/20 pt-4 flex justify-between items-baseline mb-4">
+        <span class="text-sm text-text/60">Total</span>
+        <span id="summary-total" class="text-lg font-bold text-primary">R$ ${total.toFixed(2)}</span>
+      </div>
+
+      <button id="checkout-btn"
+              class="w-full bg-primary hover:bg-accent text-white py-3 rounded-full transition-colors">
+        Finalizar compra
+      </button>
+    </aside>
   `;
 }
 
@@ -127,6 +159,11 @@ function setupInteractions(container, user, cartItems) {
       .addEventListener("click", () => removeItem(container, user, item));
   });
 
+  const couponBtn = container.querySelector("#coupon-apply");
+  couponBtn?.addEventListener("click", () =>
+    applyCoupon(container, user, cartItems),
+  );
+
   const checkoutBtn = container.querySelector("#checkout-btn");
   checkoutBtn?.addEventListener("click", () => navigate("/checkout"));
 }
@@ -148,4 +185,26 @@ async function removeItem(container, user, item) {
   } catch (err) {
     alert(err.message);
   }
+}
+
+async function applyCoupon(container, user, cartItems) {
+  const input = container.querySelector("#coupon-input");
+  const feedback = container.querySelector("#coupon-feedback");
+  const code = input.value.trim();
+
+  if (!code) return;
+
+  const knownCoupons = { POP10: 10 };
+
+  if (knownCoupons[code.toUpperCase()]) {
+    appliedCoupon = { code, value: knownCoupons[code.toUpperCase()] };
+    feedback.textContent = "Cupom aplicado";
+    feedback.className = "text-xs mt-1 text-green-600";
+  } else {
+    appliedCoupon = null;
+    feedback.textContent = "Cupom inválido";
+    feedback.className = "text-xs mt-1 text-red-500";
+  }
+
+  render(container, user, cartItems);
 }
