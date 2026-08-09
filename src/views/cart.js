@@ -180,7 +180,7 @@ function setupInteractions(container, user, cartItems) {
   );
 
   const checkoutBtn = container.querySelector("#checkout-btn");
-  checkoutBtn?.addEventListener("click", () => navigate("/checkout"));
+  checkoutBtn?.addEventListener("click", () => navigate("/checkout/address"));
 }
 
 async function runRowAction(buttons, action) {
