@@ -150,6 +150,7 @@ function attachHandlers(container, user, total) {
         .map((m) => methodButton(m))
         .join("");
       container.querySelector("#method-details").innerHTML = methodDetails(selectedMethod);
+      container.querySelector("#payment-feedback")?.classList.add("hidden"); // some ao trocar de método
       attachHandlers(container, user, total); // reanexa, já que o innerHTML foi trocado
     });
   });
@@ -183,9 +184,9 @@ async function handleConfirm(container, user, total) {
 
     await new Promise((resolve) => setTimeout(resolve, 1600));
 
-    feedback.textContent = `Pagamento com ${METHOD_LABELS[selectedMethod]} é só uma simulação — esse método não confirma o pedido nesta versão do projeto. Escolha Pix pra concluir de verdade.`;
-    feedback.classList.remove("hidden", "text-red-500");
-    feedback.classList.add("text-text/60");
+    feedback.textContent = "Não foi possível concluir a compra.";
+    feedback.classList.remove("hidden", "text-text/60");
+    feedback.classList.add("text-red-500");
 
     btn.disabled = false;
     btn.textContent = "Confirmar pagamento";
@@ -203,7 +204,9 @@ async function handleConfirm(container, user, total) {
     await paymentService.create(order.id, selectedMethod);
     createdOrder = order;
 
-    await showPixQrCode(container, order.total ?? total);
+    // order.total vem do backend e não inclui frete (backend não tem esse conceito) —
+    // por isso usamos sempre o "total" calculado aqui no front, que já soma o frete
+    await showPixQrCode(container, total);
     showPostConfirmButtons(container);
   } catch (err) {
     feedback.textContent = err.message;
