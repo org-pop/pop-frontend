@@ -23,7 +23,11 @@ async function request(endpoint, { method = "GET", body, params } = {}) {
     throw new Error(errorBody.message || `Erro ${res.status}`);
   }
 
-  return res.status === 204 ? null : res.json();
+  // Endpoints que devolvem void (cancelar pedido, remover item, etc.) chegam aqui
+  // com corpo vazio mas status 200 — nem sempre 204. Ler como texto primeiro evita
+  // o `.json()` quebrar com "Unexpected end of JSON input" nesses casos.
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 export const api = {
