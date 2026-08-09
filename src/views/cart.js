@@ -14,6 +14,7 @@ export async function renderCart(container) {
     render(container, user, enriched);
   } catch (err) {
     console.error(err);
+    container.innerHTML = `<p class="min-h-screen flex flex-col justify-center text-center text-red-500 py-20">Não foi possível carregar o carrinho. Confira se o servidor está rodando e tente novamente.</p>`;
   }
 }
 
@@ -28,29 +29,42 @@ async function enrichWithProductData(cartItems) {
   );
 }
 
+// estado local do cupom aplicado (não persiste, some ao recarregar a página)
 let appliedCoupon = null;
 
-const SHIPPING_COST = 15.9;
+const SHIPPING_COST = 15.9; // valor fixo por enquanto — trocar quando tiver cálculo real por CEP
 
 function render(container, user, cartItems) {
   container.innerHTML = `
     <div class="max-w-5xl mx-auto my-10 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 px-4">
 
       <section class="border border-secondary/40 rounded-2xl overflow-hidden bg-surface h-fit">
-        <header class="flex items-center gap-3 px-8 py-5 border-b border-secondary/20">
-          <svg class="w-6 h-6 text-primary" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0.577816 0.033145C0.679561 0.0030607 0.786236 -0.00667994 0.891747 0.00447955C0.997258 0.015639 1.09954 0.0474799 1.19274 0.0981829C1.28594 0.148886 1.36824 0.217457 1.43493 0.299979C1.50162 0.382501 1.5514 0.477355 1.58142 0.579123L2.17368 2.58535H17.9546C19.936 2.58535 21.449 4.43435 20.8782 6.3652L19.0961 12.3957C18.717 13.6804 17.5121 14.5387 16.1725 14.5387H6.31302C4.97344 14.5387 3.76954 13.6804 3.38942 12.3957L0.0329391 1.0368C-0.0275304 0.831591 -0.00411943 0.610776 0.0980341 0.422813C0.200188 0.23485 0.372738 0.094019 0.577816 0.033145ZM4.30688 18.577C4.30688 17.9344 4.56215 17.3181 5.01652 16.8637C5.4709 16.4093 6.08717 16.154 6.72975 16.154C7.37234 16.154 7.9886 16.4093 8.44298 16.8637C8.89736 17.3181 9.15262 17.9344 9.15262 18.577C9.15262 19.2196 8.89736 19.8359 8.44298 20.2903C7.9886 20.7447 7.37234 21 6.72975 21C6.08717 21 5.4709 20.7447 5.01652 20.2903C4.56215 19.8359 4.30688 19.2196 4.30688 18.577ZM12.9215 18.577C12.9215 18.2588 12.9842 17.9438 13.106 17.6498C13.2277 17.3558 13.4062 17.0887 13.6312 16.8637C13.8562 16.6387 14.1233 16.4602 14.4172 16.3385C14.7112 16.2167 15.0262 16.154 15.3444 16.154C15.6626 16.154 15.9776 16.2167 16.2716 16.3385C16.5656 16.4602 16.8326 16.6387 17.0576 16.8637C17.2826 17.0887 17.4611 17.3558 17.5828 17.6498C17.7046 17.9438 17.7673 18.2588 17.7673 18.577C17.7673 19.2196 17.512 19.8359 17.0576 20.2903C16.6033 20.7447 15.987 21 15.3444 21C14.7018 21 14.0856 20.7447 13.6312 20.2903C13.1768 19.8359 12.9215 19.2196 12.9215 18.577Z" fill="currentColor"/>
-          </svg>
-          <div>
-            <p class="font-semibold text-primary text-sm">Meu carrinho</p>
-            <p class="text-xs text-text/50">Faça pedidos por aqui</p>
+        <header class="flex items-center justify-between gap-3 px-8 py-5 border-b border-secondary/20">
+          <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-primary" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0.577816 0.033145C0.679561 0.0030607 0.786236 -0.00667994 0.891747 0.00447955C0.997258 0.015639 1.09954 0.0474799 1.19274 0.0981829C1.28594 0.148886 1.36824 0.217457 1.43493 0.299979C1.50162 0.382501 1.5514 0.477355 1.58142 0.579123L2.17368 2.58535H17.9546C19.936 2.58535 21.449 4.43435 20.8782 6.3652L19.0961 12.3957C18.717 13.6804 17.5121 14.5387 16.1725 14.5387H6.31302C4.97344 14.5387 3.76954 13.6804 3.38942 12.3957L0.0329391 1.0368C-0.0275304 0.831591 -0.00411943 0.610776 0.0980341 0.422813C0.200188 0.23485 0.372738 0.094019 0.577816 0.033145ZM4.30688 18.577C4.30688 17.9344 4.56215 17.3181 5.01652 16.8637C5.4709 16.4093 6.08717 16.154 6.72975 16.154C7.37234 16.154 7.9886 16.4093 8.44298 16.8637C8.89736 17.3181 9.15262 17.9344 9.15262 18.577C9.15262 19.2196 8.89736 19.8359 8.44298 20.2903C7.9886 20.7447 7.37234 21 6.72975 21C6.08717 21 5.4709 20.7447 5.01652 20.2903C4.56215 19.8359 4.30688 19.2196 4.30688 18.577ZM12.9215 18.577C12.9215 18.2588 12.9842 17.9438 13.106 17.6498C13.2277 17.3558 13.4062 17.0887 13.6312 16.8637C13.8562 16.6387 14.1233 16.4602 14.4172 16.3385C14.7112 16.2167 15.0262 16.154 15.3444 16.154C15.6626 16.154 15.9776 16.2167 16.2716 16.3385C16.5656 16.4602 16.8326 16.6387 17.0576 16.8637C17.2826 17.0887 17.4611 17.3558 17.5828 17.6498C17.7046 17.9438 17.7673 18.2588 17.7673 18.577C17.7673 19.2196 17.512 19.8359 17.0576 20.2903C16.6033 20.7447 15.987 21 15.3444 21C14.7018 21 14.0856 20.7447 13.6312 20.2903C13.1768 19.8359 12.9215 19.2196 12.9215 18.577Z" fill="currentColor"/>
+            </svg>
+            <div>
+              <p class="font-semibold text-primary text-sm">Meu carrinho</p>
+              <p class="text-xs text-text/50">Faça pedidos por aqui</p>
+            </div>
           </div>
+          <button id="continue-shopping" class="text-xs text-primary hover:underline shrink-0">
+            + Adicionar mais itens
+          </button>
         </header>
 
         <div id="cart-items" class="flex flex-col gap-4 p-6">
           ${
             cartItems.length === 0
-              ? `<p class="text-center text-text/50 py-16">Seu carrinho está vazio.</p>`
+              ? `
+                <div class="flex flex-col items-center text-center py-16 gap-4">
+                  <p class="text-text/50">Seu carrinho está vazio.</p>
+                  <button id="go-to-catalog" class="bg-primary hover:bg-accent text-white text-sm px-5 py-2.5 rounded-full transition-colors">
+                    Ver produtos
+                  </button>
+                </div>
+              `
               : cartItems.map((item) => cartItemRow(item)).join("")
           }
         </div>
@@ -70,7 +84,7 @@ function cartItemRow(item) {
       <input type="checkbox" checked class="w-5 h-5 rounded border-secondary text-primary accent-primary shrink-0" />
 
       <div class="w-20 h-20 bg-bg rounded-lg overflow-hidden shrink-0">
-        <img src="public/images/${item.product.imageUrl}.png" alt="${item.product.name}" class="w-full h-full object-cover" />
+        <img src="${item.product.imageUrl}" alt="${item.product.name}" class="w-full h-full object-cover" />
       </div>
 
       <div class="flex-1 min-w-0">
@@ -148,30 +162,23 @@ function setupInteractions(container, user, cartItems) {
   container.querySelectorAll("[data-item-id]").forEach((row) => {
     const itemId = row.dataset.itemId;
     const item = cartItems.find((i) => String(i.id) === itemId);
-    const buttons = row.querySelectorAll("button");
 
     row
       .querySelector('[data-action="increase"]')
       .addEventListener("click", () =>
-        runRowAction(buttons, () =>
-          updateQuantity(container, user, item, item.quantity + 1),
-        ),
+        updateQuantity(container, user, cartItems, item, item.quantity + 1),
       );
 
     row
       .querySelector('[data-action="decrease"]')
       .addEventListener("click", () => {
         if (item.quantity <= 1) return;
-        runRowAction(buttons, () =>
-          updateQuantity(container, user, item, item.quantity - 1),
-        );
+        updateQuantity(container, user, cartItems, item, item.quantity - 1);
       });
 
     row
       .querySelector('[data-action="remove"]')
-      .addEventListener("click", () =>
-        runRowAction(buttons, () => removeItem(container, user, item)),
-      );
+      .addEventListener("click", () => removeItem(container, user, cartItems, item));
   });
 
   const couponBtn = container.querySelector("#coupon-apply");
@@ -181,48 +188,59 @@ function setupInteractions(container, user, cartItems) {
 
   const checkoutBtn = container.querySelector("#checkout-btn");
   checkoutBtn?.addEventListener("click", () => navigate("/checkout/address"));
+
+  container
+    .querySelector("#continue-shopping")
+    ?.addEventListener("click", () => navigate("/catalog"));
+
+  container
+    .querySelector("#go-to-catalog")
+    ?.addEventListener("click", () => navigate("/catalog"));
 }
 
-async function runRowAction(buttons, action) {
-  buttons.forEach((b) => (b.disabled = true));
-  try {
-    await action();
-  } finally {
-    buttons.forEach((b) => (b.disabled = false));
-  }
-}
-
+// "não encontrado" = o item já foi removido do servidor (ex.: outra aba) —
+// nesse caso o resultado que o usuário queria já aconteceu, não é erro de verdade
 function isAlreadyGone(err) {
   return /não encontrado/i.test(err.message);
 }
 
-async function updateQuantity(container, user, item, newQty) {
-  try {
-    await cartService.updateQuantity(user.id, item.id, newQty);
-    item.quantity = newQty;
-    renderCart(container); // re-fetch to keep totals in sync
-  } catch (err) {
+// Atualiza a quantidade na hora (sem esperar a rede) e só depois sincroniza com o
+// servidor em segundo plano. Se falhar, desfaz e re-renderiza com o valor real.
+function updateQuantity(container, user, cartItems, item, newQty) {
+  const previousQty = item.quantity;
+  item.quantity = newQty;
+  render(container, user, cartItems); // instantâneo, sem re-fetch
+
+  cartService.updateQuantity(user.id, item.id, newQty).catch((err) => {
+    if (isAlreadyGone(err)) {
+      renderCart(container); // caso raro — resincroniza tudo com o servidor
+      return;
+    }
+    item.quantity = previousQty; // desfaz
+    render(container, user, cartItems);
+    alert(err.message);
+  });
+}
+
+// Mesma lógica: remove da tela na hora, sincroniza com o servidor depois.
+function removeItem(container, user, cartItems, item) {
+  const index = cartItems.indexOf(item);
+  cartItems.splice(index, 1);
+  render(container, user, cartItems);
+
+  cartService.removeItem(user.id, item.id).catch((err) => {
     if (isAlreadyGone(err)) {
       renderCart(container);
       return;
     }
+    cartItems.splice(index, 0, item); // desfaz
+    render(container, user, cartItems);
     alert(err.message);
-  }
+  });
 }
 
-async function removeItem(container, user, item) {
-  try {
-    await cartService.removeItem(user.id, item.id);
-    renderCart(container);
-  } catch (err) {
-    if (isAlreadyGone(err)) {
-      renderCart(container);
-      return;
-    }
-    alert(err.message);
-  }
-}
-
+// TODO: trocar validação local por chamada real quando o pop-api tiver
+// um endpoint tipo POST /cart/:userId/coupon
 async function applyCoupon(container, user, cartItems) {
   const input = container.querySelector("#coupon-input");
   const feedback = container.querySelector("#coupon-feedback");
@@ -230,7 +248,7 @@ async function applyCoupon(container, user, cartItems) {
 
   if (!code) return;
 
-  const knownCoupons = { POP10: 10 };
+  const knownCoupons = { POP10: 10 }; // placeholder — mock enquanto não existe backend
 
   if (knownCoupons[code.toUpperCase()]) {
     appliedCoupon = { code, value: knownCoupons[code.toUpperCase()] };
@@ -242,5 +260,5 @@ async function applyCoupon(container, user, cartItems) {
     feedback.className = "text-xs mt-1 text-red-500";
   }
 
-  render(container, user, cartItems);
+  render(container, user, cartItems); // só re-renderiza, não precisa re-fetch
 }

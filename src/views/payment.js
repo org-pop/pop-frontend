@@ -4,7 +4,7 @@ import { orderService } from "../services/order.js";
 import { paymentService } from "../services/payment.js";
 import { store } from "../state/store.js";
 import { navigate } from "../router.js";
-import QRCode from "qrcode";
+import qrcode from "qrcode-generator";
 
 const SHIPPING_COST = 15.9; // mesmo valor fixo usado no cart.js
 const METHOD_LABELS = { PIX: "Pix", CARTAO: "Cartão", BOLETO: "Boleto" };
@@ -252,7 +252,11 @@ function showPostConfirmButtons(container) {
 
 async function showPixQrCode(container, amount) {
   const payload = buildPixPayload({ pixKey: STORE_PIX_KEY, amount });
-  const qrDataUrl = await QRCode.toDataURL(payload, { width: 240, margin: 1 });
+
+  const qr = qrcode(0, "M"); // 0 = detecta o tamanho automaticamente, M = correção de erro média
+  qr.addData(payload);
+  qr.make();
+  const qrDataUrl = qr.createDataURL(6, 8); // tamanho da célula, margem
 
   container.querySelector("#method-details").innerHTML = `
     <div class="flex flex-col items-center gap-3 py-2">

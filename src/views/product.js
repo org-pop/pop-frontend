@@ -2,6 +2,7 @@ import { productService } from "../services/product.js";
 import { cartService } from "../services/cart.js";
 import { store } from "../state/store.js";
 import { navigate } from "../router.js";
+import { showToast } from "../components/toast.js";
 import "../components/product-carousel.js";
 
 export async function renderProduct(container, params) {
@@ -13,6 +14,7 @@ export async function renderProduct(container, params) {
     loadRelated(container, product);
   } catch (err) {
     console.error(err);
+    container.innerHTML = `<p class="min-h-screen flex flex-col justify-center text-center text-red-500 py-20">Não foi possível carregar o produto. Confira se o servidor está rodando e tente novamente.</p>`;
   }
 }
 
@@ -36,7 +38,7 @@ function render(container, product) {
 
           <p class="text-2xl font-bold text-primary mt-6">R$ ${Number(product.price).toFixed(2)}</p>
 
-          <p class="text-sm text-text/70 mt-4 leading-relaxed">${product.description}</p>
+          <p class="text-sm text-text/70 mt-4 leading-relaxed">${product.description || "Sem descrição disponível."}</p>
 
           <p class="text-sm mt-6 ${inStock ? "text-text/60" : "text-red-500 font-medium"}">
             ${inStock ? `${product.stock} unidades em estoque` : "Fora de estoque"}
@@ -54,8 +56,6 @@ function render(container, product) {
                   class="w-full bg-primary hover:bg-accent disabled:bg-secondary/30 disabled:cursor-not-allowed text-white py-3.5 rounded-full mt-6 transition-colors">
             ${inStock ? "Adicionar ao carrinho" : "Indisponível"}
           </button>
-
-          <p id="cart-feedback" class="text-sm text-primary mt-3 hidden"></p>
         </div>
       </div>
 
@@ -72,7 +72,6 @@ function render(container, product) {
 function setupInteractions(container, product) {
   let qty = 1;
   const qtyValue = container.querySelector("#qty-value");
-  const feedback = container.querySelector("#cart-feedback");
 
   container.querySelector("#qty-minus").addEventListener("click", () => {
     if (qty > 1) qty--;
@@ -93,19 +92,21 @@ function setupInteractions(container, product) {
         return;
       }
 
+      const previousCart = cart;
+      // atualização otimista — mostra o resultado na hora, sem esperar a rede
       store.setState({ cart: [...cart, { quantity: qty }] });
+      showToast("Adicionado ao carrinho!");
 
       try {
+        // addItem no pop-api ainda devolve só o CartItem criado (não a lista
+        // inteira), então precisamos buscar o carrinho atualizado à parte —
+        // senão o store.cart vira um objeto único e quebra o cart.reduce do header
         await cartService.addItem(user.id, product.id, qty);
         const updatedCart = await cartService.get(user.id);
         store.setState({ cart: updatedCart });
-        feedback.textContent = "Adicionado ao carrinho!";
-        feedback.classList.remove("hidden");
       } catch (err) {
-        store.setState({ cart });
-        feedback.textContent = err.message;
-        feedback.classList.remove("hidden");
-        feedback.classList.add("text-red-500");
+        store.setState({ cart: previousCart }); // desfaz a atualização otimista
+        showToast(err.message, "error");
       }
     });
 }
