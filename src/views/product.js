@@ -3,6 +3,7 @@ import { cartService } from "../services/cart.js";
 import { store } from "../state/store.js";
 import { navigate } from "../router.js";
 import { showToast } from "../components/toast.js";
+import { imageSrc } from "../utils/image.js";
 import "../components/product-carousel.js";
 
 export async function renderProduct(container, params) {
@@ -25,7 +26,7 @@ function render(container, product) {
     <section class="max-w-5xl mx-auto px-6 py-10 min-h-screen">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div class="aspect-square bg-surface rounded-3xl overflow-hidden">
-          <img src="../public/images/${product.imageUrl}.png" alt="${product.imageAltText || product.name}" class="w-full h-full object-cover" />
+          <img src="${imageSrc(product.imageUrl)}" alt="${product.imageAltText || product.name}" class="w-full h-full object-cover" />
         </div>
 
         <div class="flex flex-col">
@@ -40,8 +41,8 @@ function render(container, product) {
 
           <p class="text-sm text-text/70 mt-4 leading-relaxed">${product.description || "Sem descrição disponível."}</p>
 
-          <p class="text-sm mt-6 ${inStock ? "text-text/60" : "text-red-500 font-medium"}">
-            ${inStock ? `${product.stock} unidades em estoque` : "Fora de estoque"}
+          <p id="stock-info" class="text-sm mt-6 ${inStock ? "text-text/60" : "text-red-500 font-medium"}">
+            ${inStock ? `${product.stock - 1} unidades em estoque` : "Fora de estoque"}
           </p>
 
           <div class="flex items-center gap-3 mt-4">
@@ -72,15 +73,22 @@ function render(container, product) {
 function setupInteractions(container, product) {
   let qty = 1;
   const qtyValue = container.querySelector("#qty-value");
+  const stockInfo = container.querySelector("#stock-info");
+
+  const updateStockInfo = () => {
+    if (stockInfo) stockInfo.textContent = `${product.stock - qty} unidades em estoque`;
+  };
 
   container.querySelector("#qty-minus").addEventListener("click", () => {
     if (qty > 1) qty--;
     qtyValue.textContent = qty;
+    updateStockInfo();
   });
 
   container.querySelector("#qty-plus").addEventListener("click", () => {
     if (qty < product.stock) qty++;
     qtyValue.textContent = qty;
+    updateStockInfo();
   });
 
   container

@@ -2,6 +2,7 @@ import { cartService } from "../services/cart.js";
 import { productService } from "../services/product.js";
 import { store } from "../state/store.js";
 import { navigate } from "../router.js";
+import { imageSrc } from "../utils/image.js";
 
 export async function renderCart(container) {
   const { user } = store.getState();
@@ -84,7 +85,7 @@ function cartItemRow(item) {
       <input type="checkbox" checked class="w-5 h-5 rounded border-secondary text-primary accent-primary shrink-0" />
 
       <div class="w-20 h-20 bg-bg rounded-lg overflow-hidden shrink-0">
-        <img src="../public/images/${item.product.imageUrl}.png" alt="${item.product.name}" class="w-full h-full object-cover" />
+        <img src="${imageSrc(item.product.imageUrl)}" alt="${item.product.name}" class="w-full h-full object-cover" />
       </div>
 
       <div class="flex-1 min-w-0">
