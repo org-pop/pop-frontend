@@ -8,7 +8,7 @@ import QRCode from "qrcode";
 
 const SHIPPING_COST = 15.9; // mesmo valor fixo usado no cart.js
 const METHOD_LABELS = { PIX: "Pix", CARTAO: "Cartão", BOLETO: "Boleto" };
-const STORE_PIX_KEY = "11999894183"; // chave da loja — trocar pela chave real quando tiver uma
+const STORE_PIX_KEY = "5511999894183"; // chave da loja — trocar pela chave real quando tiver uma
 
 let selectedMethod = "PIX";
 let createdOrder = null; // guardado depois da confirmação, pra permitir cancelar o pedido
