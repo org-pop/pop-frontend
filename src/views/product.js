@@ -22,8 +22,8 @@ function render(container, product) {
   container.innerHTML = `
     <section class="max-w-5xl mx-auto px-6 py-10 min-h-screen">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <div class="aspect-square bg-surface rounded-lg overflow-hidden">
-          <img src="../${product.imageUrl}" alt="${product.imageAltText || product.name}" class="w-full h-full object-cover" />
+        <div class="aspect-square bg-surface rounded-3xl overflow-hidden">
+          <img src="../public/images/${product.imageUrl}.png" alt="${product.imageAltText || product.name}" class="w-full h-full object-cover" />
         </div>
 
         <div class="flex flex-col">
