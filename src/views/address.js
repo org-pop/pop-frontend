@@ -26,6 +26,8 @@ export async function renderAddress(container) {
 function render(container, user, addresses) {
   container.innerHTML = `
     <section class="max-w-2xl mx-auto px-6 py-10 min-h-screen">
+      <button id="back-to-cart" class="text-sm text-primary hover:underline mb-4">← Voltar ao carrinho</button>
+
       <h1 class="text-xl font-bold text-text mb-1">Endereço de entrega</h1>
       <p class="text-sm text-text/60 mb-6">Escolha um endereço salvo ou cadastre um novo</p>
 
@@ -90,8 +92,12 @@ function addressCard(addr) {
 }
 
 function setupInteractions(container, user) {
+  container.querySelector("#back-to-cart")?.addEventListener("click", () => navigate("/cart"));
+
   container.querySelectorAll('input[name="selected-address"]').forEach((radio) => {
     radio.addEventListener("change", () => {
+      // guarda só nessa sessão do navegador — hoje o backend não vincula
+      // endereço ao pedido, então isso é usado só pra UI por enquanto
       sessionStorage.setItem("checkout-address-id", radio.value);
       navigate("/checkout/payment");
     });

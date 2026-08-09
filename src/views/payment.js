@@ -6,13 +6,16 @@ import { store } from "../state/store.js";
 import { navigate } from "../router.js";
 import QRCode from "qrcode";
 
-const SHIPPING_COST = 15.9;
+const SHIPPING_COST = 15.9; // mesmo valor fixo usado no cart.js
 const METHOD_LABELS = { PIX: "Pix", CARTAO: "Cartão", BOLETO: "Boleto" };
+const STORE_PIX_KEY = "11999894183"; // chave da loja — trocar pela chave real quando tiver uma
 
 let selectedMethod = "PIX";
+let createdOrder = null; // guardado depois da confirmação, pra permitir cancelar o pedido
 
 export async function renderPayment(container) {
   const { user } = store.getState();
+  createdOrder = null;
 
   container.innerHTML = `<p class="min-h-screen flex flex-col justify-center text-center text-text/60 py-20">Carregando resumo do pedido...</p>`;
 
@@ -47,6 +50,8 @@ function render(container, user, cartItems) {
 
   container.innerHTML = `
     <section class="max-w-2xl mx-auto px-6 py-10 min-h-screen">
+      <button id="back-link" class="text-sm text-primary hover:underline mb-4">← Voltar ao endereço</button>
+
       <h1 class="text-xl font-bold text-text mb-1">Pagamento</h1>
       <p class="text-sm text-text/60 mb-6">Escolha como você quer pagar</p>
 
@@ -76,15 +81,27 @@ function render(container, user, cartItems) {
 
         <p id="payment-feedback" class="text-sm mt-3 hidden"></p>
 
-        <button id="confirm-payment-btn" type="button"
-                class="w-full bg-primary hover:bg-accent disabled:bg-secondary/30 text-white py-3 rounded-full mt-4 transition-colors">
-          Confirmar pagamento
-        </button>
+        <div id="action-buttons">
+          ${preConfirmButtons()}
+        </div>
       </div>
     </section>
   `;
 
   attachHandlers(container, user, total);
+}
+
+function preConfirmButtons() {
+  return `
+    <button id="confirm-payment-btn" type="button"
+            class="w-full bg-primary hover:bg-accent disabled:bg-secondary/30 text-white py-3 rounded-full mt-4 transition-colors">
+      Confirmar pagamento
+    </button>
+    <button id="cancel-checkout-btn" type="button"
+            class="w-full border border-red-200 text-red-500 hover:bg-red-50 py-3 rounded-full mt-3 transition-colors">
+      Cancelar compra
+    </button>
+  `;
 }
 
 function methodButton(value) {
@@ -103,16 +120,26 @@ function methodButton(value) {
 
 function methodDetails(method) {
   if (method === "PIX") {
+    return `<p class="text-sm text-text/60">Ao confirmar, você recebe um QR Code pra pagar com o app do seu banco.</p>`;
+  }
+  if (method === "CARTAO") {
     return `
       <div class="flex flex-col gap-2">
-        <label class="text-xs text-text/50">Sua chave Pix (recebedor)</label>
-        <input id="pix-key" required placeholder="CPF, e-mail, telefone ou chave aleatória"
+        <input placeholder="Número do cartão" maxlength="19"
                class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
-        <p class="text-xs text-text/40">O QR Code é gerado com essa chave e o valor total do pedido.</p>
+        <div class="grid grid-cols-2 gap-2">
+          <input placeholder="Validade (MM/AA)" maxlength="5"
+                 class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
+          <input placeholder="CVV" maxlength="4"
+                 class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
+        </div>
+        <input placeholder="Nome impresso no cartão"
+               class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
       </div>
     `;
   }
-  return `<p class="text-sm text-text/60">Pagamento fica registrado como pendente — este projeto não integra com gateway de pagamento real.</p>`;
+  // BOLETO
+  return `<p class="text-sm text-text/60">Um boleto seria gerado com o valor total e vencimento em 3 dias úteis.</p>`;
 }
 
 function attachHandlers(container, user, total) {
@@ -123,28 +150,46 @@ function attachHandlers(container, user, total) {
         .map((m) => methodButton(m))
         .join("");
       container.querySelector("#method-details").innerHTML = methodDetails(selectedMethod);
-      attachHandlers(container, user, total);
+      attachHandlers(container, user, total); // reanexa, já que o innerHTML foi trocado
     });
   });
 
   container
+    .querySelector("#back-link")
+    ?.addEventListener("click", () => navigate("/checkout/address"));
+
+  container
     .querySelector("#confirm-payment-btn")
-    .addEventListener("click", () => handleConfirm(container, user, total));
+    ?.addEventListener("click", () => handleConfirm(container, user, total));
+
+  container
+    .querySelector("#cancel-checkout-btn")
+    ?.addEventListener("click", () => {
+      // nada foi criado no backend ainda nesse ponto — só volta pro carrinho
+      navigate("/cart");
+    });
 }
 
 async function handleConfirm(container, user, total) {
   const feedback = container.querySelector("#payment-feedback");
   const btn = container.querySelector("#confirm-payment-btn");
 
-  let pixKey = null;
-  if (selectedMethod === "PIX") {
-    pixKey = container.querySelector("#pix-key")?.value.trim();
-    if (!pixKey) {
-      feedback.textContent = "Digite sua chave Pix pra gerar o QR Code.";
-      feedback.classList.remove("hidden");
-      feedback.classList.add("text-red-500");
-      return;
-    }
+  // Cartão e Boleto não têm gateway de verdade por trás — simula o processamento
+  // visualmente, mas nunca cria pedido nem pagamento no backend.
+  if (selectedMethod !== "PIX") {
+    feedback.classList.add("hidden");
+    btn.disabled = true;
+    btn.textContent = "Processando pagamento...";
+
+    await new Promise((resolve) => setTimeout(resolve, 1600));
+
+    feedback.textContent = `Pagamento com ${METHOD_LABELS[selectedMethod]} é só uma simulação — esse método não confirma o pedido nesta versão do projeto. Escolha Pix pra concluir de verdade.`;
+    feedback.classList.remove("hidden", "text-red-500");
+    feedback.classList.add("text-text/60");
+
+    btn.disabled = false;
+    btn.textContent = "Confirmar pagamento";
+    return;
   }
 
   feedback.classList.add("hidden");
@@ -152,18 +197,14 @@ async function handleConfirm(container, user, total) {
   btn.textContent = "Processando...";
 
   try {
+    // só finaliza o pedido de verdade (baixa estoque) no clique de confirmar,
+    // não ao simplesmente visitar a página
     const order = await orderService.checkout(user.id);
-    const payment = await paymentService.create(order.id, selectedMethod);
+    await paymentService.create(order.id, selectedMethod);
+    createdOrder = order;
 
-    if (selectedMethod === "PIX") {
-      await showPixQrCode(container, pixKey, order.total ?? total);
-      btn.classList.add("hidden");
-    } else {
-      container.querySelector("#method-details").innerHTML = `
-        <p class="text-sm text-primary">Pedido #${order.id} criado! Pagamento em ${payment.status === "PENDING" ? "análise" : payment.status.toLowerCase()}.</p>
-      `;
-      btn.classList.add("hidden");
-    }
+    await showPixQrCode(container, order.total ?? total);
+    showPostConfirmButtons(container);
   } catch (err) {
     feedback.textContent = err.message;
     feedback.classList.remove("hidden");
@@ -173,8 +214,44 @@ async function handleConfirm(container, user, total) {
   }
 }
 
-async function showPixQrCode(container, pixKey, amount) {
-  const payload = buildPixPayload({ pixKey, amount });
+function showPostConfirmButtons(container) {
+  container.querySelector("#action-buttons").innerHTML = `
+    <button id="cancel-order-btn" type="button"
+            class="w-full border border-red-200 text-red-500 hover:bg-red-50 py-3 rounded-full mt-4 transition-colors">
+      Cancelar pedido
+    </button>
+    <button id="continue-shopping-btn" type="button"
+            class="w-full text-sm text-primary hover:underline mt-3">
+      Continuar comprando
+    </button>
+  `;
+
+  container.querySelector("#cancel-order-btn").addEventListener("click", async () => {
+    if (!createdOrder) return;
+    const cancelBtn = container.querySelector("#cancel-order-btn");
+    cancelBtn.disabled = true;
+    cancelBtn.textContent = "Cancelando...";
+
+    try {
+      await orderService.cancel(createdOrder.id);
+      navigate("/cart");
+    } catch (err) {
+      const feedback = container.querySelector("#payment-feedback");
+      feedback.textContent = err.message;
+      feedback.classList.remove("hidden");
+      feedback.classList.add("text-red-500");
+      cancelBtn.disabled = false;
+      cancelBtn.textContent = "Cancelar pedido";
+    }
+  });
+
+  container
+    .querySelector("#continue-shopping-btn")
+    .addEventListener("click", () => navigate("/catalog"));
+}
+
+async function showPixQrCode(container, amount) {
+  const payload = buildPixPayload({ pixKey: STORE_PIX_KEY, amount });
   const qrDataUrl = await QRCode.toDataURL(payload, { width: 240, margin: 1 });
 
   container.querySelector("#method-details").innerHTML = `
@@ -203,6 +280,8 @@ async function showPixQrCode(container, pixKey, amount) {
   });
 }
 
+// Monta o payload EMV/BR Code do Pix — o mesmo formato usado no "Pix Copia e Cola" de verdade.
+// Qualquer app de banco consegue escanear isso e reconhecer chave + valor.
 function buildPixPayload({
   pixKey,
   amount,
@@ -215,20 +294,21 @@ function buildPixPayload({
   const merchantAccountInfo = field("00", "br.gov.bcb.pix") + field("01", pixKey);
 
   let payload =
-    field("00", "01") +
-    field("26", merchantAccountInfo) +
-    field("52", "0000") +
-    field("53", "986") +
-    field("54", Number(amount).toFixed(2)) +
-    field("58", "BR") +
-    field("59", merchantName.slice(0, 25)) +
-    field("60", merchantCity.slice(0, 15)) +
-    field("62", field("05", txid.slice(0, 25)));
+    field("00", "01") + // Payload Format Indicator
+    field("26", merchantAccountInfo) + // Merchant Account Info (chave Pix)
+    field("52", "0000") + // Merchant Category Code
+    field("53", "986") + // Moeda: BRL
+    field("54", Number(amount).toFixed(2)) + // Valor da transação
+    field("58", "BR") + // País
+    field("59", merchantName.slice(0, 25)) + // Nome do recebedor
+    field("60", merchantCity.slice(0, 15)) + // Cidade do recebedor
+    field("62", field("05", txid.slice(0, 25))); // Identificador da transação
 
-  payload += "6304";
+  payload += "6304"; // ID + tamanho do campo de CRC (o valor em si vem do crc16 abaixo)
   return payload + crc16(payload);
 }
 
+// CRC16-CCITT (polinômio 0x1021, inicial 0xFFFF) — checksum exigido pelo padrão do Pix
 function crc16(payload) {
   let crc = 0xffff;
   for (let i = 0; i < payload.length; i++) {
