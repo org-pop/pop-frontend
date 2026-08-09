@@ -79,7 +79,7 @@ function cartItemRow(item) {
       <input type="checkbox" checked class="w-5 h-5 rounded border-secondary text-primary accent-primary shrink-0" />
 
       <div class="w-20 h-20 bg-bg rounded-lg overflow-hidden shrink-0">
-        <img src="${item.product.imageUrl}" alt="${item.product.name}" class="w-full h-full object-cover" />
+        <img src="public/images/${item.product.imageUrl}.png" alt="${item.product.name}" class="w-full h-full object-cover" />
       </div>
 
       <div class="flex-1 min-w-0">
