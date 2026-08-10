@@ -25,3 +25,83 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ---------- micro-animações ---------- */
+
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* aplicada no container principal a cada troca de rota */
+.route-enter {
+  animation: fade-slide-up 0.28s ease-out both;
+}
+
+/* cards que aparecem em sequência: os primeiros 8 entram escalonados,
+   do 9º em diante já entram sem delay pra não travar listas longas */
+.stagger-in > * {
+  animation: fade-slide-up 0.35s ease-out both;
+}
+.stagger-in > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-in > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-in > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-in > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-in > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-in > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-in > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-in > *:nth-child(8) { animation-delay: 280ms; }
+
+/* dropdown/menu que abre — fade+slide curto */
+.menu-enter {
+  animation: fade-slide-down 0.16s ease-out both;
+  transform-origin: top;
+}
+
+/* feedback tátil em elementos clicáveis do design system */
+button,
+a[data-link],
+[role="option"] {
+  transition: transform 0.12s ease-out, background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+button:not(:disabled):active,
+a[data-link]:active,
+[role="option"]:active {
+  transform: scale(0.97);
+}
+
+/* respeita quem preferiu menos movimento (acessibilidade) */
+@media (prefers-reduced-motion: reduce) {
+  .route-enter,
+  .stagger-in > *,
+  .menu-enter {
+    animation: none !important;
+  }
+  button,
+  a[data-link],
+  [role="option"] {
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+  }
+  button:not(:disabled):active,
+  a[data-link]:active,
+  [role="option"]:active {
+    transform: none !important;
+  }
+}
