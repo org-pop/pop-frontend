@@ -51,6 +51,15 @@ function handleRouteChange() {
 
   const params = new URLSearchParams(window.location.search);
   viewFn(container, { ...match.params, query: params });
+  playRouteEnter(container);
+}
+
+// Re-dispara a animação de entrada da rota. Forçar reflow entre remove/add é
+// o padrão que funciona sync — RAF aqui às vezes é engolido pelo batching do browser.
+function playRouteEnter(el) {
+  el.classList.remove("route-enter");
+  void el.offsetWidth; // força reflow — o browser "compromete" o remove antes do add
+  el.classList.add("route-enter");
 }
 
 function matchRoute(path) {

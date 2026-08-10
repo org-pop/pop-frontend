@@ -1,5 +1,5 @@
 import { authService } from "../services/auth.js";
-import { store } from "../state/store.js";
+import { store, normalizeUser } from "../state/store.js";
 import { navigate } from "../router.js";
 
 export function renderLogin(container, params) {
@@ -102,8 +102,9 @@ export function renderLogin(container, params) {
   }
 
   function onAuthSuccess(result) {
-    const user = { ...result, id: result.userId };
-    localStorage.setItem("token", user.token);
+    // O AuthResponse traz `userId`; o resto do app espera `user.id`.
+    const user = normalizeUser(result);
+    localStorage.setItem("token", result.token);
     localStorage.setItem("user", JSON.stringify(user));
     store.setState({ user });
     navigate(redirectTo);

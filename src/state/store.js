@@ -15,7 +15,15 @@ function createStore(initialState) {
   };
 }
 
+// O backend retorna `userId` no AuthResponse; o resto do front usa `user.id`.
+// Normalizamos aqui e no login para que qualquer sessão (nova ou já persistida
+// no localStorage) enxergue ambos os campos e nada quebre em `${user.id}`.
+export function normalizeUser(u) {
+  if (!u) return null;
+  return { ...u, id: u.id ?? u.userId };
+}
+
 export const store = createStore({
-  user: JSON.parse(localStorage.getItem("user")) || null,
+  user: normalizeUser(JSON.parse(localStorage.getItem("user"))),
   cart: [],
 });

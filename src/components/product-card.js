@@ -1,3 +1,5 @@
+import { imageSrc } from "../utils/image.js";
+
 class ProductCard extends HTMLElement {
   static get observedAttributes() {
     return ["data-id", "data-name", "data-price", "data-image", "data-loading"];
@@ -32,7 +34,7 @@ class ProductCard extends HTMLElement {
     this.innerHTML = `
       <a href="/product/${id}" data-link class="flex flex-col group cursor-pointer">
         <div class="aspect-square bg-surface overflow-hidden rounded-3xl">
-          <img src="../public/images/${image}.png" alt="${name}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          <img src="${imageSrc(image)}" alt="${name}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
         </div>
         <p class="text-sm text-text mt-3 text-center">${name}</p>
         <p class="text-sm text-text/70 text-center">R$ ${Number(price).toFixed(2)}</p>
