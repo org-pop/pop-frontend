@@ -2,6 +2,7 @@ import { productService } from "../services/product.js";
 import { imageSrc } from "../utils/image.js";
 import { splitPinned } from "../utils/products.js";
 import "../components/product-carousel.js";
+import "../components/hero-carousel.js";
 
 const RARITY_FILTERS = [
   { value: "all", label: "Todos" },
@@ -12,7 +13,7 @@ const RARITY_FILTERS = [
 
 export async function renderHome(container) {
   container.innerHTML = `
-    <section class="h-[400px] bg-[url('/home.png')] bg-cover bg-center bg-no-repeat"></section>
+    <hero-carousel></hero-carousel>
     <section class="flex flex-col gap-6 px-6 sm:px-10 py-8 max-w-6xl mx-auto">
       <h2 class="text-xl font-semibold text-primary text-center">Destaques</h2>
 
