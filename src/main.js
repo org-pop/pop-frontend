@@ -4,6 +4,7 @@ import { store } from './state/store.js';
 import { cartService } from './services/cart.js';
 import "./components/nav-header.js";
 import "./components/site-footer.js";
+import "./components/side-menu.js";
 import { initRouter, registerRoute } from './router.js';
 
 bootstrapTheme();
