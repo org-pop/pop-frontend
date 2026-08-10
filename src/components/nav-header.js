@@ -1,19 +1,39 @@
 import { store } from "../state/store.js";
+import {
+  isHighContrast,
+  toggleHighContrast,
+  increaseFontScale,
+  decreaseFontScale,
+  canIncreaseFontScale,
+  canDecreaseFontScale,
+} from "../utils/theme.js";
 import "./search-bar.js";
 
 class NavHeader extends HTMLElement {
   connectedCallback() {
     this.render();
     this.unsubscribe = store.subscribe(() => this.render());
+    // re-renderiza quando o modo alto contraste é ligado/desligado
+    // pra que o aria-pressed do botão fique correto
+    this.onHcChange = () => this.render();
+    window.addEventListener("hc-change", this.onHcChange);
+    // re-renderiza tb ao mudar tamanho de fonte pra atualizar disabled dos A-/A+
+    this.onFontChange = () => this.render();
+    window.addEventListener("font-scale-change", this.onFontChange);
   }
 
   disconnectedCallback() {
     this.unsubscribe?.();
+    window.removeEventListener("hc-change", this.onHcChange);
+    window.removeEventListener("font-scale-change", this.onFontChange);
   }
 
   render() {
     const { user, cart } = store.getState();
     const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const hcOn = isHighContrast();
+    const shouldPop = this._lastCartCount !== undefined && this._lastCartCount !== cartCount;
+    this._lastCartCount = cartCount;
 
     this.innerHTML = `
     <header class="fixed inset-x-0 top-0 bg-bg z-40">
@@ -29,25 +49,61 @@ class NavHeader extends HTMLElement {
 
       <search-bar></search-bar>
 
+      <div class="flex items-center gap-1" aria-label="Acessibilidade">
+        <button type="button"
+                id="font-decrease"
+                ${canDecreaseFontScale() ? "" : "disabled"}
+                aria-label="Diminuir tamanho da fonte"
+                title="Diminuir tamanho da fonte"
+                class="text-primary hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm font-semibold px-1.5">
+          A−
+        </button>
+        <button type="button"
+                id="font-increase"
+                ${canIncreaseFontScale() ? "" : "disabled"}
+                aria-label="Aumentar tamanho da fonte"
+                title="Aumentar tamanho da fonte"
+                class="text-primary hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-lg font-semibold px-1.5">
+          A+
+        </button>
+      </div>
+
+      <button type="button"
+              id="hc-toggle"
+              aria-label="${hcOn ? "Desativar alto contraste" : "Ativar alto contraste"}"
+              aria-pressed="${hcOn}"
+              title="${hcOn ? "Desativar alto contraste" : "Ativar alto contraste"}"
+              class="text-primary hover:text-accent transition-colors">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <path d="M12 2a10 10 0 0 0 0 20V2z" fill="currentColor"/>
+        </svg>
+      </button>
+
       <a href="${user ? "/profile" : "/login"}" data-link aria-label="Perfil" class="text-primary hover:text-accent transition-colors">
         <svg class="w-6 h-6" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path fill-rule="evenodd" clip-rule="evenodd" d="M6.11111 4.88889C6.11111 3.59228 6.62619 2.34877 7.54303 1.43192C8.45988 0.515078 9.70339 0 11 0C12.2966 0 13.5401 0.515078 14.457 1.43192C15.3738 2.34877 15.8889 3.59228 15.8889 4.88889C15.8889 6.1855 15.3738 7.42901 14.457 8.34586C13.5401 9.2627 12.2966 9.77778 11 9.77778C9.70339 9.77778 8.45988 9.2627 7.54303 8.34586C6.62619 7.42901 6.11111 6.1855 6.11111 4.88889ZM6.11111 12.2222C4.49034 12.2222 2.93596 12.8661 1.7899 14.0121C0.643847 15.1582 0 16.7126 0 18.3333C0 19.3058 0.386309 20.2384 1.07394 20.9261C1.76158 21.6137 2.69421 22 3.66667 22H18.3333C19.3058 22 20.2384 21.6137 20.9261 20.9261C21.6137 20.2384 22 19.3058 22 18.3333C22 16.7126 21.3562 15.1582 20.2101 14.0121C19.064 12.8661 17.5097 12.2222 15.8889 12.2222H6.11111Z" fill="currentColor"/>
         </svg>
       </a>
 
-      <a href="/cart" data-link aria-label="Carrinho" class="text-primary hover:text-accent transition-colors">
-        <svg class="w-6 h-6" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <a href="/cart" data-link aria-label="Carrinho${cartCount > 0 ? ` (${cartCount} ${cartCount === 1 ? "item" : "itens"})` : ""}"
+         class="relative text-primary hover:text-accent transition-colors">
+        <svg class="w-6 h-6" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M0.577816 0.033145C0.679561 0.0030607 0.786236 -0.00667994 0.891747 0.00447955C0.997258 0.015639 1.09954 0.0474799 1.19274 0.0981829C1.28594 0.148886 1.36824 0.217457 1.43493 0.299979C1.50162 0.382501 1.5514 0.477355 1.58142 0.579123L2.17368 2.58535H17.9546C19.936 2.58535 21.449 4.43435 20.8782 6.3652L19.0961 12.3957C18.717 13.6804 17.5121 14.5387 16.1725 14.5387H6.31302C4.97344 14.5387 3.76954 13.6804 3.38942 12.3957L0.0329391 1.0368C-0.0275304 0.831591 -0.00411943 0.610776 0.0980341 0.422813C0.200188 0.23485 0.372738 0.094019 0.577816 0.033145ZM4.30688 18.577C4.30688 17.9344 4.56215 17.3181 5.01652 16.8637C5.4709 16.4093 6.08717 16.154 6.72975 16.154C7.37234 16.154 7.9886 16.4093 8.44298 16.8637C8.89736 17.3181 9.15262 17.9344 9.15262 18.577C9.15262 19.2196 8.89736 19.8359 8.44298 20.2903C7.9886 20.7447 7.37234 21 6.72975 21C6.08717 21 5.4709 20.7447 5.01652 20.2903C4.56215 19.8359 4.30688 19.2196 4.30688 18.577ZM12.9215 18.577C12.9215 18.2588 12.9842 17.9438 13.106 17.6498C13.2277 17.3558 13.4062 17.0887 13.6312 16.8637C13.8562 16.6387 14.1233 16.4602 14.4172 16.3385C14.7112 16.2167 15.0262 16.154 15.3444 16.154C15.6626 16.154 15.9776 16.2167 16.2716 16.3385C16.5656 16.4602 16.8326 16.6387 17.0576 16.8637C17.2826 17.0887 17.4611 17.3558 17.5828 17.6498C17.7046 17.9438 17.7673 18.2588 17.7673 18.577C17.7673 19.2196 17.512 19.8359 17.0576 20.2903C16.6033 20.7447 15.987 21 15.3444 21C14.7018 21 14.0856 20.7447 13.6312 20.2903C13.1768 19.8359 12.9215 19.2196 12.9215 18.577Z" fill="currentColor"/>
         </svg>
         ${
           cartCount > 0
-            ? `<span class="absolute -top-2 -right-2 text-[10px] bg-primary text-white rounded-full w-4 h-4 flex items-center justify-center">${cartCount}</span>`
+            ? `<span id="cart-badge" class="absolute -top-2 -right-2 text-[10px] font-bold bg-primary text-white rounded-full min-w-4 h-4 px-1 flex items-center justify-center ring-2 ring-bg${shouldPop ? " badge-pop" : ""}">${cartCount > 99 ? "99+" : cartCount}</span>`
             : ""
         }
       </a>
     </div>
     </header>
     `;
+
+    this.querySelector("#hc-toggle")?.addEventListener("click", toggleHighContrast);
+    this.querySelector("#font-decrease")?.addEventListener("click", decreaseFontScale);
+    this.querySelector("#font-increase")?.addEventListener("click", increaseFontScale);
   }
 }
 

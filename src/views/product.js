@@ -37,7 +37,7 @@ function render(container, product) {
             ${product.rarity}
           </span>
 
-          <p class="text-2xl font-bold text-primary mt-6">R$ ${Number(product.price).toFixed(2)}</p>
+          <p id="price-display" class="text-2xl font-bold text-primary mt-6">R$ ${Number(product.price).toFixed(2)}</p>
 
           <p class="text-sm text-text/70 mt-4 leading-relaxed">${product.description || "Sem descrição disponível."}</p>
 
@@ -74,21 +74,22 @@ function setupInteractions(container, product) {
   let qty = 1;
   const qtyValue = container.querySelector("#qty-value");
   const stockInfo = container.querySelector("#stock-info");
+  const priceDisplay = container.querySelector("#price-display");
 
-  const updateStockInfo = () => {
+  const sync = () => {
+    qtyValue.textContent = qty;
     if (stockInfo) stockInfo.textContent = `${product.stock - qty} unidades em estoque`;
+    if (priceDisplay) priceDisplay.textContent = `R$ ${(product.price * qty).toFixed(2)}`;
   };
 
   container.querySelector("#qty-minus").addEventListener("click", () => {
     if (qty > 1) qty--;
-    qtyValue.textContent = qty;
-    updateStockInfo();
+    sync();
   });
 
   container.querySelector("#qty-plus").addEventListener("click", () => {
     if (qty < product.stock) qty++;
-    qtyValue.textContent = qty;
-    updateStockInfo();
+    sync();
   });
 
   container

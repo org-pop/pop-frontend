@@ -37,6 +37,112 @@
   --color-accent: var(--color-brand-purple);
 }
 
+/* modo alto contraste (WCAG AAA): fundo preto puro + texto branco puro
+   + amarelo forte para chamadas de ação. Ativado com a classe .hc no <html>.
+   Overrides usam !important porque o Tailwind v4 com @layer/@theme resolve
+   algumas utilities em compile time e não respeita a troca de tokens em runtime. */
+.hc {
+  --color-bg: #000000;
+  --color-surface: #000000;
+  --color-text: #FFFFFF;
+  --color-primary: #FFEB00;
+  --color-secondary: #FFFFFF;
+  --color-accent: #FFEB00;
+  color-scheme: dark;
+}
+
+.hc,
+.hc body {
+  background-color: #000 !important;
+  color: #FFF !important;
+}
+
+/* remove transparências e sombras que atrapalham a leitura contra o preto.
+   Toast é exceção: precisa de opacity animada para entrar/sair, e precisa de
+   sombra para destacar do fundo preto do resto da tela em HC. */
+.hc *:not(#app-toast),
+.hc *:not(#app-toast)::before,
+.hc *:not(#app-toast)::after {
+  opacity: 1 !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+.hc #app-toast {
+  box-shadow: 0 0 0 2px #FFEB00, 0 10px 30px rgba(0,0,0,0.6) !important;
+  border: 2px solid #000 !important;
+}
+
+/* foco visível AAA — outline amarelo grosso em qualquer elemento focado */
+.hc *:focus-visible {
+  outline: 3px solid #FFEB00 !important;
+  outline-offset: 2px !important;
+}
+
+/* backgrounds */
+.hc .bg-bg,
+.hc .bg-surface,
+.hc [class*="bg-surface"] {
+  background-color: #000 !important;
+}
+.hc .bg-primary {
+  background-color: #FFEB00 !important;
+  color: #000 !important;
+}
+.hc .bg-primary svg,
+.hc .bg-primary * {
+  color: #000 !important;
+  stroke: currentColor !important;
+}
+.hc [class*="bg-primary/"] {
+  background-color: transparent !important;
+}
+
+/* texto */
+.hc .text-text,
+.hc [class*="text-text/"],
+.hc [class*="text-white/"] {
+  color: #FFF !important;
+}
+.hc .text-primary,
+.hc [class*="text-primary"] {
+  color: #FFEB00 !important;
+}
+.hc .text-secondary {
+  color: #FFF !important;
+}
+
+/* bordas — mais grossas e sólidas para separar áreas sem depender de cor */
+.hc .border,
+.hc [class*="border-"] {
+  border-color: #FFF !important;
+  border-width: 2px !important;
+}
+.hc .border-primary,
+.hc [class*="border-primary"] {
+  border-color: #FFEB00 !important;
+}
+
+/* estados hover — mantém o contraste amarelo/branco em vez de flip escuro/claro */
+.hc .hover\:bg-accent:hover {
+  background-color: #FFF !important;
+  color: #000 !important;
+}
+.hc .hover\:text-accent:hover,
+.hc .hover\:text-primary:hover {
+  color: #FFEB00 !important;
+}
+.hc .hover\:border-primary:hover {
+  border-color: #FFEB00 !important;
+}
+.hc .hover\:bg-primary\/5:hover,
+.hc .hover\:bg-primary\/10:hover,
+.hc .hover\:bg-secondary\/10:hover {
+  background-color: transparent !important;
+  outline: 2px solid #FFEB00 !important;
+  outline-offset: -2px;
+}
+
 * {
   box-sizing: border-box;
   font-family: "Inter", sans-serif;

@@ -1,7 +1,26 @@
 import './css/main.css';
+import { bootstrapTheme } from './utils/theme.js';
+import { store } from './state/store.js';
+import { cartService } from './services/cart.js';
 import "./components/nav-header.js";
 import "./components/site-footer.js";
 import { initRouter, registerRoute } from './router.js';
+
+bootstrapTheme();
+
+// carrega o cart do backend no boot pra que o badge do header apareça correto
+// já no primeiro render — sem isso, o contador só popula quando o user visita /cart
+async function bootstrapCart() {
+  const { user } = store.getState();
+  if (!user) return;
+  try {
+    const cart = await cartService.get(user.id);
+    store.setState({ cart });
+  } catch {
+    // silencioso — se o backend estiver fora, o resto do app continua funcionando
+  }
+}
+bootstrapCart();
 import { renderHome } from './views/home.js';
 import { renderLogin } from './views/login.js';
 import { renderCatalog } from './views/catalog.js';

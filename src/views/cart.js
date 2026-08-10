@@ -12,6 +12,7 @@ export async function renderCart(container) {
   try {
     const cartItems = await cartService.get(user.id);
     const enriched = await enrichWithProductData(cartItems);
+    store.setState({ cart: enriched }); // mantém o badge do header em sincronia com o que a tela mostra
     render(container, user, enriched);
   } catch (err) {
     console.error(err);
@@ -211,6 +212,7 @@ function updateQuantity(container, user, cartItems, item, newQty) {
   const previousQty = item.quantity;
   item.quantity = newQty;
   render(container, user, cartItems); // instantâneo, sem re-fetch
+  store.setState({ cart: cartItems }); // badge do header acompanha na hora
 
   cartService.updateQuantity(user.id, item.id, newQty).catch((err) => {
     if (isAlreadyGone(err)) {
@@ -219,6 +221,7 @@ function updateQuantity(container, user, cartItems, item, newQty) {
     }
     item.quantity = previousQty; // desfaz
     render(container, user, cartItems);
+    store.setState({ cart: cartItems });
     alert(err.message);
   });
 }
@@ -228,6 +231,7 @@ function removeItem(container, user, cartItems, item) {
   const index = cartItems.indexOf(item);
   cartItems.splice(index, 1);
   render(container, user, cartItems);
+  store.setState({ cart: cartItems }); // badge do header acompanha na hora
 
   cartService.removeItem(user.id, item.id).catch((err) => {
     if (isAlreadyGone(err)) {
@@ -236,6 +240,7 @@ function removeItem(container, user, cartItems, item) {
     }
     cartItems.splice(index, 0, item); // desfaz
     render(container, user, cartItems);
+    store.setState({ cart: cartItems });
     alert(err.message);
   });
 }
