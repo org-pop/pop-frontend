@@ -13,41 +13,22 @@ const STATUS_LABELS = {
 export async function renderProfile(container) {
   const { user } = store.getState();
 
-  container.innerHTML = shell(user, `<p class="text-center text-text/50 py-10">Carregando pedidos...</p>`);
-  wireHeader(container);
+  let isEditing = false;
+  let isSaving = false;
 
-  try {
-    const orders = await orderService.getByUser(user.id);
+  function render() {
+    container.innerHTML = `
+      <section class="max-w-2xl mx-auto px-6 py-10 min-h-screen">
 
-    container.querySelector("#orders-list").innerHTML = orders.length
-      ? orders
-          .slice()
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-          .map(orderRow)
-          .join("")
-      : `<p class="text-center text-text/50 py-10 px-4">Você ainda não fez nenhum pedido.</p>`;
-  } catch (err) {
-    console.error(err);
-    container.querySelector("#orders-list").innerHTML =
-      `<p class="text-center text-red-500 py-10 px-4">Não foi possível carregar seus pedidos.</p>`;
-  }
-}
-
-function shell(user, ordersContent) {
-  return `
-    <section class="max-w-5xl mx-auto px-6 py-10 pt-28 min-h-screen">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-
-        <div class="flex flex-col">
-          <header class="flex items-center gap-4 mb-6">
-            <div class="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold shrink-0">
-              ${initials(user.name)}
-            </div>
-            <div class="min-w-0">
-              <h1 class="text-xl font-bold text-text truncate">${user.name || "Minha conta"}</h1>
-              <p class="text-sm text-text/60 truncate">${user.email || ""}</p>
-            </div>
-          </header>
+        <header class="flex items-center gap-4 mb-8">
+          <div class="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold shrink-0">
+            ${initials(user.name)}
+          </div>
+          <div class="min-w-0">
+            <h1 class="text-2xl font-bold text-text truncate">${user.name || "Minha conta"}</h1>
+            <p class="text-sm text-text/60 truncate">${user.email || ""}</p>
+          </div>
+        </header>
 
           <button id="edit-data-btn" type="button"
                   class="w-full bg-primary hover:bg-accent text-white py-3 rounded-full transition-colors mb-6">

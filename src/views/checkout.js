@@ -61,7 +61,7 @@ function total(items) {
 
 function renderForm(container, user, items) {
   container.innerHTML = `
-    <section class="max-w-3xl mx-auto px-6 py-10 pt-28">
+    <section class="max-w-3xl mx-auto px-6 py-10">
       <h1 class="text-2xl font-bold text-text">Finalizar compra</h1>
 
       <div class="grid grid-cols-1 md:grid-cols-5 gap-8 mt-8">
@@ -226,7 +226,7 @@ function renderConfirmation(container, order, method) {
   const label = PAYMENT_METHODS.find((m) => m.value === method)?.label || method;
 
   container.innerHTML = `
-    <section class="max-w-xl mx-auto px-6 py-10 pt-28 min-h-screen" aria-live="polite">
+    <section class="max-w-xl mx-auto px-6 py-10 min-h-screen" aria-live="polite">
       <div class="border border-secondary/40 rounded-2xl p-8 bg-surface text-center">
         <p class="text-4xl" aria-hidden="true">✓</p>
         <h1 tabindex="-1" class="text-2xl font-bold text-text mt-3">Pedido confirmado</h1>
