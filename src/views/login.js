@@ -3,26 +3,21 @@ import { store, normalizeUser } from "../state/store.js";
 import { navigate } from "../router.js";
 
 const STEP_COPY = {
-  email: {
-    title: "Entre ou cadastre-se",
-    subtitle: "Insira o email da sua conta ou crie um novo usuário para comprar no POP.",
-    button: "Enviar",
-  },
-  password: {
+  login: {
     title: "Entre",
-    subtitle: "Insira sua senha da conta POP.",
+    subtitle: "Insira o e-mail e a senha da sua conta POP.",
     button: "Entrar",
   },
   register: {
     title: "Cadastre-se",
-    subtitle: "Crie uma senha para sua conta POP.",
+    subtitle: "Crie sua conta POP com e-mail e senha.",
     button: "Entrar",
   },
 };
 
 export function renderLogin(container, params) {
   const redirectTo = params.query.get("redirect") || "/";
-  let step = "email"; // "email" -> "password" (login) ou "register" (conta nova)
+  let step = "login"; // "login" <-> "register", alternável a qualquer momento
   let typedEmail = "";
 
   function render() {
@@ -42,18 +37,13 @@ export function renderLogin(container, params) {
           </div>
 
           <form id="auth-form" class="flex-1 flex flex-col gap-3">
+            <input type="email" id="email" required placeholder="Insira seu e-mail" value="${typedEmail}" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
             ${
-              step === "email"
+              step === "login"
                 ? `
-              <input type="email" id="email" required placeholder="Insira seu e-mail" value="${typedEmail}" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
-            `
-                : step === "password"
-                ? `
-              <input type="email" value="${typedEmail}" disabled class="border border-secondary/40 rounded-full px-5 py-2.5 bg-surface/50 text-text/60" />
               <input type="password" id="password" required placeholder="Insira sua senha" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
             `
                 : `
-              <input type="email" value="${typedEmail}" disabled class="border border-secondary/40 rounded-full px-5 py-2.5 bg-surface/50 text-text/60" />
               <input type="text" id="name" required placeholder="Seu nome" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
               <input type="password" id="password" required minlength="6" placeholder="Insira a nova senha" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
               <input type="password" id="password-confirm" required minlength="6" placeholder="Confirme a nova senha" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
@@ -64,17 +54,9 @@ export function renderLogin(container, params) {
 
         <p id="auth-message" class="text-sm mt-4 hidden"></p>
 
-        ${
-          step === "password"
-            ? `<button type="button" id="switch-to-register" class="text-sm text-primary hover:underline mt-2 text-left">
-                 Não tem conta? Cadastre-se
-               </button>`
-            : step === "register"
-            ? `<button type="button" id="switch-to-login" class="text-sm text-primary hover:underline mt-2 text-left">
-                 Já tem conta? Entrar
-               </button>`
-            : ""
-        }
+        <button type="button" id="switch-step" class="text-sm text-primary hover:underline mt-2 text-left">
+          ${step === "login" ? "Não tem conta? Cadastre-se" : "Já tem conta? Entrar"}
+        </button>
 
         <button type="submit" form="auth-form"
                 class="w-full bg-primary hover:bg-accent text-white py-3.5 rounded-full mt-10 transition-colors">
@@ -85,13 +67,10 @@ export function renderLogin(container, params) {
 
     container.querySelector("#auth-form").addEventListener("submit", handleSubmit);
 
-    container.querySelector("#switch-to-register")?.addEventListener("click", () => {
-      step = "register";
-      render();
-    });
-
-    container.querySelector("#switch-to-login")?.addEventListener("click", () => {
-      step = "password";
+    container.querySelector("#switch-step").addEventListener("click", () => {
+      // preserva o que já foi digitado no e-mail ao trocar de tela
+      typedEmail = container.querySelector("#email").value.trim();
+      step = step === "login" ? "register" : "login";
       render();
     });
   }
@@ -107,26 +86,17 @@ export function renderLogin(container, params) {
   async function handleSubmit(e) {
     e.preventDefault();
 
-    if (step === "email") {
-      typedEmail = container.querySelector("#email").value.trim();
-      if (!typedEmail) return;
-      // Não existe endpoint pra checar se o e-mail já tem conta sem estar logado
-      // (de propósito — evita que qualquer um descubra e-mails cadastrados).
-      // Por isso a etapa seguinte é sempre "tentar login primeiro"; só sabemos se
-      // a conta existe de verdade quando essa tentativa responder.
-      step = "password";
-      render();
-      return;
-    }
+    const email = container.querySelector("#email").value.trim();
+    const password = container.querySelector("#password").value;
 
-    if (step === "password") {
-      const password = container.querySelector("#password").value;
+    if (step === "login") {
       try {
-        const result = await authService.login(typedEmail, password);
+        const result = await authService.login(email, password);
         onAuthSuccess(result);
       } catch (err) {
-        // login falhou: pode ser senha errada, mas na dúvida tratamos como
-        // "conta não existe ainda" e oferecemos o cadastro
+        // login falhou: pode ser senha errada, mas na dúvida oferecemos o cadastro
+        // (o backend não expõe se o e-mail existe sem estar autenticado, de propósito)
+        typedEmail = email;
         step = "register";
         render();
         showMessage("Não encontramos essa conta. Complete os dados para criar uma.", false);
@@ -136,7 +106,6 @@ export function renderLogin(container, params) {
 
     if (step === "register") {
       const name = container.querySelector("#name").value.trim();
-      const password = container.querySelector("#password").value;
       const passwordConfirm = container.querySelector("#password-confirm").value;
 
       if (password !== passwordConfirm) {
@@ -145,7 +114,7 @@ export function renderLogin(container, params) {
       }
 
       try {
-        const result = await authService.register(name, typedEmail, password);
+        const result = await authService.register(name, email, password);
         onAuthSuccess(result);
       } catch (err) {
         showMessage(err.message || "Erro ao criar conta.");
