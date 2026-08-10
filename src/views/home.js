@@ -1,12 +1,13 @@
 import { productService } from "../services/product.js";
 import { imageSrc } from "../utils/image.js";
+import { splitPinned } from "../utils/products.js";
 import "../components/product-carousel.js";
 
 const RARITY_FILTERS = [
   { value: "all", label: "Todos" },
   { value: "COMUM", label: "Comum" },
-  { value: "RARO", label: "Raro" },
   { value: "AURUDO", label: "Aurudo" },
+  { value: "GOD", label: "God" },
 ];
 
 export async function renderHome(container) {
@@ -21,7 +22,7 @@ export async function renderHome(container) {
 
       <product-carousel id="featured-carousel"></product-carousel>
 
-      <div id="featured-large" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+      <div id="featured-large" class="flex flex-wrap justify-center gap-6"></div>
 
       <nav class="text-center"><a href="/catalog" class="text-primary font-bold pointer underline">Ver catálogo completo</a></nav>
     </section>
@@ -34,16 +35,29 @@ export async function renderHome(container) {
   carousel.setLoading(4);
 
   let allProducts = [];
+  let pinnedProducts = [];
   let activeFilter = "all";
 
   try {
     allProducts = await productService.getAll();
+    pinnedProducts = splitPinned(allProducts).pinned;
     renderFiltered();
   } catch (err) {
     console.error(err);
   }
 
   function renderFiltered() {
+    // filtro "God" mostra só Rodolfo/Diogo, que já ficam fixos nos quadrados grandes —
+    // o carrossel viraria uma repetição exata, então some por completo nesse caso
+    if (activeFilter === "GOD") {
+      carousel.classList.add("hidden");
+      renderLarge(pinnedProducts);
+      return;
+    }
+    carousel.classList.remove("hidden");
+
+    // carrossel segue o filtro normalmente, sem pin — Rodolfo/Diogo só aparecem
+    // ali quando o filtro naturalmente os inclui (Todos)
     const filtered =
       activeFilter === "all"
         ? allProducts
@@ -51,27 +65,30 @@ export async function renderHome(container) {
 
     if (filtered.length === 0) {
       carousel.setProducts([]);
+    } else {
+      carousel.setProducts(filtered);
+    }
+
+    // os quadrados grandes de destaque são sempre o Rodolfo e o Diogo (fixados),
+    // independente do filtro de raridade ativo
+    if (pinnedProducts.length > 0) {
+      renderLarge(pinnedProducts);
+    } else if (filtered.length > 0) {
+      renderLarge(filtered.slice(0, 2));
+    } else {
       largeGrid.innerHTML = `
         <p class="col-span-full text-center text-text/50 py-10">
           Nenhum produto encontrado para essa raridade.
         </p>
       `;
-      return;
     }
-
-    carousel.setProducts(filtered.slice(0, 4));
-
-    // pega os próximos 2 pra não repetir o que já apareceu nos cards pequenos;
-    // se não sobrar o suficiente, volta pro começo da lista filtrada
-    const rest = filtered.slice(4, 6);
-    renderLarge(rest.length > 0 ? rest : filtered.slice(0, 2));
   }
 
   function renderLarge(products) {
     largeGrid.innerHTML = products
       .map(
         (p) => `
-        <a href="/product/${p.id}" data-link class="flex flex-col group">
+        <a href="/product/${p.id}" data-link class="flex flex-col group w-64 sm:w-80">
           <div class="aspect-square bg-surface rounded-3xl overflow-hidden">
             <img src="${imageSrc(p.imageUrl)}" alt="${p.imageAltText || p.name}"
                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />

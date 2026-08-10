@@ -11,7 +11,7 @@ export function renderProfile(container) {
 
   function render() {
     container.innerHTML = `
-      <section class="max-w-2xl mx-auto px-6 py-10 pt-28 min-h-screen">
+      <section class="max-w-2xl mx-auto px-6 py-10 min-h-screen">
 
         <header class="flex items-center gap-4 mb-8">
           <div class="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold shrink-0">

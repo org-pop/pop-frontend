@@ -15,7 +15,7 @@ export function renderCatalog(container, params) {
   const searchTerm = params.query.get("name") || "";
 
   container.innerHTML = `
-    <section class="flex flex-col gap-10 max-w-5xl mx-auto px-6 py-10 pt-27">
+    <section class="flex flex-col gap-10 max-w-5xl mx-auto px-6 py-10">
       <div class="flex items-center justify-between gap-4 flex-wrap">
         <h1 class="text-lg font-bold text-primary">
           ${searchTerm ? `Resultados para "${searchTerm}"` : "Catálogo completo"}
