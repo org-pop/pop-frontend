@@ -58,11 +58,13 @@
 }
 
 /* remove transparências e sombras que atrapalham a leitura contra o preto.
-   Toast é exceção: precisa de opacity animada para entrar/sair, e precisa de
-   sombra para destacar do fundo preto do resto da tela em HC. */
-.hc *:not(#app-toast),
-.hc *:not(#app-toast)::before,
-.hc *:not(#app-toast)::after {
+   Toast e .hc-fade são exceção: usam opacity para animar entrada/saída ou pra
+   indicar estado (slide ativo, menu aberto/fechado) — forçar opacity:1 neles
+   não é "mais contraste", é quebrar a UI (ex: os dois banners da home ficando
+   sobrepostos, ou o overlay do menu lateral sempre visível por cima da página). */
+.hc *:not(#app-toast):not(.hc-fade),
+.hc *:not(#app-toast):not(.hc-fade)::before,
+.hc *:not(#app-toast):not(.hc-fade)::after {
   opacity: 1 !important;
   text-shadow: none !important;
   box-shadow: none !important;

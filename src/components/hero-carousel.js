@@ -36,7 +36,7 @@ class HeroCarousel extends HTMLElement {
         ${this.images
           .map(
             (src, i) => `
-          <div class="hero-slide absolute inset-0 bg-contain bg-center bg-no-repeat transition-opacity ${FADE_DURATION} ease-in-out ${i === 0 ? "opacity-100" : "opacity-0"}"
+          <div class="hero-slide hc-fade absolute inset-0 bg-contain bg-center bg-no-repeat transition-opacity ${FADE_DURATION} ease-in-out ${i === 0 ? "opacity-100" : "opacity-0"}"
                style="background-image: url('${src}')"></div>
         `,
           )
@@ -47,7 +47,7 @@ class HeroCarousel extends HTMLElement {
             .map(
               (_, i) => `
             <button type="button" data-dot="${i}" aria-label="Ir para o slide ${i + 1}"
-                    class="hero-dot h-2 rounded-full bg-white transition-all duration-300 ${i === 0 ? "w-6 opacity-100" : "w-2 opacity-50"}"></button>
+                    class="hero-dot hc-fade h-2 rounded-full bg-white transition-all duration-300 ${i === 0 ? "w-6 opacity-100" : "w-2 opacity-50"}"></button>
           `,
             )
             .join("")}

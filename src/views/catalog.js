@@ -63,7 +63,7 @@ function filterDropdown() {
               class="px-4 py-2.5 cursor-pointer flex items-center justify-between gap-3 text-text hover:bg-primary/10 hover:text-primary transition-colors"
               aria-selected="${opt.value === "default"}">
             <span>${opt.label}</span>
-            <svg class="check w-4 h-4 text-primary opacity-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg class="check hc-fade w-4 h-4 text-primary opacity-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </li>

@@ -47,7 +47,7 @@ class SideMenu extends HTMLElement {
     this.innerHTML = `
       <div id="side-menu-root" class="fixed inset-0 z-50 pointer-events-none" aria-hidden="true">
         <div id="side-menu-overlay"
-             class="absolute inset-0 bg-black/40 opacity-0 transition-opacity duration-300 ease-out">
+             class="hc-fade absolute inset-0 bg-black/40 opacity-0 transition-opacity duration-300 ease-out">
         </div>
 
         <nav id="side-menu-panel" aria-label="Menu de navegação"
