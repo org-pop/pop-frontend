@@ -4,10 +4,11 @@ import { store } from "../state/store.js";
 import { navigate } from "../router.js";
 import { showToast } from "../components/toast.js";
 import { imageSrc } from "../utils/image.js";
+import { escapeHtml } from "../utils/html.js";
 import "../components/product-carousel.js";
 
 export async function renderProduct(container, params) {
-  container.innerHTML = `<p class="min-h-screen flex flex-col justify-center text-center text-text/60 py-20">Carregando produto...</p>`;
+  container.innerHTML = `<p class="min-h-screen flex flex-col justify-center text-center text-text/70 py-20">Carregando produto...</p>`;
 
   try {
     const product = await productService.getById(params.id);
@@ -28,30 +29,30 @@ function render(container, product) {
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div class="aspect-square bg-surface rounded-3xl overflow-hidden">
-          <img src="${imageSrc(product.imageUrl)}" alt="${product.imageAltText || product.name}" class="w-full h-full object-cover" />
+          <img src="${imageSrc(product.imageUrl)}" alt="${escapeHtml(product.imageAltText || product.name)}" class="w-full h-full object-cover" />
         </div>
 
         <div class="flex flex-col">
-          <p class="text-xs uppercase tracking-wide text-secondary font-medium">${product.franchise}</p>
-          <h1 class="text-2xl font-bold text-text mt-1">${product.name}</h1>
+          <p class="text-xs uppercase tracking-wide text-text/70 font-medium">${escapeHtml(product.franchise)}</p>
+          <h1 class="text-2xl font-bold text-text mt-1">${escapeHtml(product.name)}</h1>
 
           <span class="inline-block w-fit mt-3 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-            ${product.rarity}
+            ${escapeHtml(product.rarity)}
           </span>
 
           <p id="price-display" class="text-2xl font-bold text-primary mt-6">R$ ${Number(product.price).toFixed(2)}</p>
 
-          <p class="text-sm text-text/70 mt-4 leading-relaxed">${product.description || "Sem descrição disponível."}</p>
+          <p class="text-sm text-text/70 mt-4 leading-relaxed">${escapeHtml(product.description) || "Sem descrição disponível."}</p>
 
-          <p id="stock-info" class="text-sm mt-6 ${inStock ? "text-text/60" : "text-red-500 font-medium"}">
+          <p id="stock-info" class="text-sm mt-6 ${inStock ? "text-text/70" : "text-red-500 font-medium"}">
             ${inStock ? `${product.stock - 1} unidades em estoque` : "Fora de estoque"}
           </p>
 
           <div class="flex items-center gap-3 mt-4">
-            <button id="qty-minus" type="button"
+            <button id="qty-minus" type="button" aria-label="Diminuir quantidade"
                     class="w-9 h-9 rounded-full border border-secondary text-primary hover:bg-secondary/10 transition-colors">−</button>
             <span id="qty-value" class="w-8 text-center text-text">1</span>
-            <button id="qty-plus" type="button"
+            <button id="qty-plus" type="button" aria-label="Aumentar quantidade"
                     class="w-9 h-9 rounded-full border border-secondary text-primary hover:bg-secondary/10 transition-colors">+</button>
           </div>
 

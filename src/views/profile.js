@@ -1,6 +1,7 @@
 import { store } from "../state/store.js";
 import { navigate } from "../router.js";
 import { orderService } from "../services/order.js";
+import { escapeHtml } from "../utils/html.js";
 
 const STATUS_LABELS = {
   PENDING: "Pendente",
@@ -13,7 +14,7 @@ const STATUS_LABELS = {
 export async function renderProfile(container) {
   const { user } = store.getState();
 
-  container.innerHTML = shell(user, `<p class="text-center text-text/50 py-10">Carregando pedidos...</p>`);
+  container.innerHTML = shell(user, `<p class="text-center text-text/70 py-10">Carregando pedidos...</p>`);
   wireHeader(container);
 
   try {
@@ -25,7 +26,7 @@ export async function renderProfile(container) {
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
           .map(orderRow)
           .join("")
-      : `<p class="text-center text-text/50 py-10 px-4">Você ainda não fez nenhum pedido.</p>`;
+      : `<p class="text-center text-text/70 py-10 px-4">Você ainda não fez nenhum pedido.</p>`;
   } catch (err) {
     console.error(err);
     container.querySelector("#orders-list").innerHTML =
@@ -41,11 +42,11 @@ function shell(user, ordersContent) {
         <div class="flex flex-col">
           <header class="flex items-center gap-4 mb-6">
             <div class="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-bold shrink-0">
-              ${initials(user.name)}
+              ${escapeHtml(initials(user.name))}
             </div>
             <div class="min-w-0">
-              <h1 class="text-xl font-bold text-text truncate">${user.name || "Minha conta"}</h1>
-              <p class="text-sm text-text/60 truncate">${user.email || ""}</p>
+              <h1 class="text-xl font-bold text-text truncate">${escapeHtml(user.name) || "Minha conta"}</h1>
+              <p class="text-sm text-text/70 truncate">${escapeHtml(user.email)}</p>
             </div>
           </header>
 
@@ -64,7 +65,7 @@ function shell(user, ordersContent) {
               </svg>
               <div>
                 <p class="font-semibold text-primary text-sm">Meus pedidos</p>
-                <p class="text-xs text-text/50">Acompanhe seus pedidos aqui</p>
+                <p class="text-xs text-text/70">Acompanhe seus pedidos aqui</p>
               </div>
             </div>
 
@@ -94,7 +95,7 @@ function orderRow(order) {
   return `
     <div class="px-6 py-4">
       <p class="text-sm font-semibold text-text">Pedido #${order.id}</p>
-      <p class="text-xs text-text/50">${STATUS_LABELS[order.status] || order.status}${date ? ` · ${date}` : ""}</p>
+      <p class="text-xs text-text/70">${STATUS_LABELS[order.status] || order.status}${date ? ` · ${date}` : ""}</p>
     </div>
   `;
 }

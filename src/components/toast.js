@@ -1,6 +1,8 @@
 // Popup pequeno que aparece no topo da tela por alguns segundos e some sozinho.
 // Uso: import { showToast } from "../components/toast.js"; showToast("Mensagem aqui");
 
+import { escapeHtml } from "../utils/html.js";
+
 let hideTimeout = null;
 
 export function showToast(message, type = "success") {
@@ -24,7 +26,7 @@ export function showToast(message, type = "success") {
         ? `<svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`
         : `<svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>`
     }
-    <span>${message}</span>
+    <span>${escapeHtml(message)}</span>
   `;
 
   // reseta a animação de entrada mesmo se já tiver um toast visível

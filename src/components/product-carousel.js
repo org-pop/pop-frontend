@@ -1,4 +1,5 @@
 import "./product-card.js";
+import { escapeHtml } from "../utils/html.js";
 
 class ProductCarousel extends HTMLElement {
   connectedCallback() {
@@ -23,9 +24,9 @@ class ProductCarousel extends HTMLElement {
           ? `<product-card
               class="shrink-0 w-40 sm:w-48 md:w-56"
               data-id="${p.id}"
-              data-name="${p.name}"
+              data-name="${escapeHtml(p.name)}"
               data-price="${p.price}"
-              data-image="${p.imageUrl}">
+              data-image="${escapeHtml(p.imageUrl)}">
             </product-card>`
           : `<product-card class="shrink-0 w-40 sm:w-48 md:w-56" data-loading="true"></product-card>`,
       )

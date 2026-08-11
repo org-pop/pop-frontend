@@ -1,3 +1,11 @@
+// valor fixo por enquanto — trocar quando tiver cálculo real por CEP.
+// Fonte única: cart.js e payment.js importam daqui em vez de cada um definir o seu.
+export const SHIPPING_COST = 15.9;
+
+export function calculateSubtotal(items) {
+  return items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+}
+
 // Cupons validados só no front — sem conceito disso no backend ainda.
 // Ver o TODO em cart.js: trocar por chamada real quando existir endpoint.
 export const COUPONS = {

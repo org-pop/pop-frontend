@@ -2,6 +2,7 @@ import { authService } from "../services/auth.js";
 import { store, normalizeUser } from "../state/store.js";
 import { navigate } from "../router.js";
 import { syncAccessibilityFromAccount } from "../utils/theme.js";
+import { escapeHtml } from "../utils/html.js";
 
 const STEP_COPY = {
   login: {
@@ -34,20 +35,20 @@ export function renderLogin(container, params) {
 
           <div>
             <h1 class="text-2xl font-bold text-text">${copy.title}</h1>
-            <p class="text-sm text-text/60 mt-1">${copy.subtitle}</p>
+            <p class="text-sm text-text/70 mt-1">${copy.subtitle}</p>
           </div>
 
           <form id="auth-form" class="flex-1 flex flex-col gap-3">
-            <input type="email" id="email" required placeholder="Insira seu e-mail" value="${typedEmail}" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
+            <input type="email" id="email" required placeholder="Insira seu e-mail" aria-label="E-mail" value="${escapeHtml(typedEmail)}" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
             ${
               step === "login"
                 ? `
-              <input type="password" id="password" required placeholder="Insira sua senha" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
+              <input type="password" id="password" required placeholder="Insira sua senha" aria-label="Senha" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
             `
                 : `
-              <input type="text" id="name" required placeholder="Seu nome" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
-              <input type="password" id="password" required minlength="6" placeholder="Insira a nova senha" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
-              <input type="password" id="password-confirm" required minlength="6" placeholder="Confirme a nova senha" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
+              <input type="text" id="name" required placeholder="Seu nome" aria-label="Nome" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
+              <input type="password" id="password" required minlength="6" placeholder="Insira a nova senha" aria-label="Senha" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
+              <input type="password" id="password-confirm" required minlength="6" placeholder="Confirme a nova senha" aria-label="Confirmar senha" class="border border-secondary rounded-full px-5 py-2.5 bg-surface text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
             `
             }
           </form>

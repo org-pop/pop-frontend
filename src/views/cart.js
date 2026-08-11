@@ -3,12 +3,14 @@ import { productService } from "../services/product.js";
 import { store } from "../state/store.js";
 import { navigate } from "../router.js";
 import { imageSrc } from "../utils/image.js";
-import { getCoupon, getAppliedCouponCode, setAppliedCouponCode, computeCartTotals } from "../utils/coupons.js";
+import { escapeHtml } from "../utils/html.js";
+import { showToast } from "../components/toast.js";
+import { getCoupon, getAppliedCouponCode, setAppliedCouponCode, computeCartTotals, calculateSubtotal, SHIPPING_COST } from "../utils/coupons.js";
 
 export async function renderCart(container) {
   const { user } = store.getState();
 
-  container.innerHTML = `<p class="min-h-screen flex flex-col justify-center text-center text-text/60 py-20">Carregando carrinho...</p>`;
+  container.innerHTML = `<p class="min-h-screen flex flex-col justify-center text-center text-text/70 py-20">Carregando carrinho...</p>`;
 
   try {
     const cartItems = await cartService.get(user.id);
@@ -32,8 +34,6 @@ async function enrichWithProductData(cartItems) {
   );
 }
 
-const SHIPPING_COST = 15.9; // valor fixo por enquanto — trocar quando tiver cálculo real por CEP
-
 function render(container, user, cartItems) {
   container.innerHTML = `
     <div class="max-w-5xl mx-auto my-10 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 px-4">
@@ -46,7 +46,7 @@ function render(container, user, cartItems) {
             </svg>
             <div>
               <p class="font-semibold text-primary text-sm">Meu carrinho</p>
-              <p class="text-xs text-text/50">Faça pedidos por aqui</p>
+              <p class="text-xs text-text/70">Faça pedidos por aqui</p>
             </div>
           </div>
           <button id="continue-shopping" class="text-xs text-primary hover:underline shrink-0">
@@ -59,7 +59,7 @@ function render(container, user, cartItems) {
             cartItems.length === 0
               ? `
                 <div class="flex flex-col items-center text-center py-16 gap-4">
-                  <p class="text-text/50">Seu carrinho está vazio.</p>
+                  <p class="text-text/70">Seu carrinho está vazio.</p>
                   <button id="go-to-catalog" class="bg-primary hover:bg-accent text-white text-sm px-5 py-2.5 rounded-full transition-colors">
                     Ver produtos
                   </button>
@@ -81,20 +81,20 @@ function render(container, user, cartItems) {
 function cartItemRow(item) {
   return `
     <div class="flex items-center gap-4 p-4 border border-secondary/20 rounded-xl" data-item-id="${item.id}">
-      <input type="checkbox" checked class="w-5 h-5 rounded border-secondary text-primary accent-primary shrink-0" />
+      <input type="checkbox" checked aria-label="Selecionar ${escapeHtml(item.product.name)}" class="w-5 h-5 rounded border-secondary text-primary accent-primary shrink-0" />
 
       <div class="w-20 h-20 bg-bg rounded-lg overflow-hidden shrink-0">
-        <img src="${imageSrc(item.product.imageUrl)}" alt="${item.product.name}" class="w-full h-full object-cover" />
+        <img src="${imageSrc(item.product.imageUrl)}" alt="${escapeHtml(item.product.name)}" class="w-full h-full object-cover" />
       </div>
 
       <div class="flex-1 min-w-0">
-        <p class="font-semibold text-text text-sm truncate">${item.product.name}</p>
+        <p class="font-semibold text-text text-sm truncate">${escapeHtml(item.product.name)}</p>
         <p class="text-sm text-primary font-medium mt-1">R$ ${Number(item.product.price).toFixed(2)}</p>
 
         <div class="flex items-center gap-4 mt-3">
-          <button data-action="decrease" class="w-7 h-7 rounded-full border border-secondary text-primary hover:bg-secondary/10 transition-colors">−</button>
+          <button data-action="decrease" aria-label="Diminuir quantidade" class="w-7 h-7 rounded-full border border-secondary text-primary hover:bg-secondary/10 transition-colors">−</button>
           <span class="qty-value text-sm text-text w-4 text-center">${item.quantity}</span>
-          <button data-action="increase" class="w-7 h-7 rounded-full border border-secondary text-primary hover:bg-secondary/10 transition-colors">+</button>
+          <button data-action="increase" aria-label="Aumentar quantidade" class="w-7 h-7 rounded-full border border-secondary text-primary hover:bg-secondary/10 transition-colors">+</button>
           <button data-action="remove" aria-label="Remover item" class="w-7 h-7 rounded-full border border-red-200 text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center ml-2">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 6h18"></path>
@@ -109,7 +109,7 @@ function cartItemRow(item) {
 }
 
 function orderSummary(cartItems) {
-  const subtotal = calculateTotal(cartItems);
+  const subtotal = calculateSubtotal(cartItems);
   const couponCode = getAppliedCouponCode();
   const coupon = getCoupon(couponCode);
   if (couponCode && !coupon) setAppliedCouponCode(null); // cupom não existe (mais) — limpa o resíduo
@@ -120,12 +120,12 @@ function orderSummary(cartItems) {
       <p class="font-semibold text-primary text-sm mb-4">Resumo do pedido</p>
 
       <div class="flex justify-between text-sm mb-2">
-        <span class="text-text/60">Subtotal (${cartItems.length} ${cartItems.length === 1 ? "item" : "itens"})</span>
+        <span class="text-text/70">Subtotal (${cartItems.length} ${cartItems.length === 1 ? "item" : "itens"})</span>
         <span id="summary-subtotal">R$ ${subtotal.toFixed(2)}</span>
       </div>
 
       <div class="flex justify-between text-sm mb-2">
-        <span class="text-text/60">Frete</span>
+        <span class="text-text/70">Frete</span>
         <span id="summary-shipping">${shipping === 0 ? "Grátis" : `R$ ${shipping.toFixed(2)}`}</span>
       </div>
 
@@ -133,7 +133,7 @@ function orderSummary(cartItems) {
         discount > 0
           ? `
         <div class="flex justify-between text-sm mb-2 text-primary">
-          <span>Desconto (${couponCode})</span>
+          <span>Desconto (${escapeHtml(couponCode)})</span>
           <span id="summary-discount">− R$ ${discount.toFixed(2)}</span>
         </div>
       `
@@ -141,17 +141,34 @@ function orderSummary(cartItems) {
       }
 
       <div class="mb-4">
-        <label class="text-xs text-text/50 block mb-1">Cupom de desconto</label>
+        <label for="coupon-input" class="text-xs text-text/70 block mb-1">Cupom de desconto</label>
         <div class="flex gap-2">
-          <input id="coupon-input" type="text" placeholder="Digite o código" value="${coupon ? couponCode : ""}"
+          <input id="coupon-input" type="text" placeholder="Digite o código" value="${coupon ? escapeHtml(couponCode) : ""}"
                  class="flex-1 min-w-0 border border-secondary/40 rounded-lg px-3 py-1.5 text-sm bg-bg" />
           <button id="coupon-apply" class="border border-secondary/40 rounded-lg px-3 text-sm text-primary hover:bg-secondary/10 transition-colors">Aplicar</button>
         </div>
-        <p id="coupon-feedback" class="text-xs mt-1 ${coupon ? "text-green-600" : ""}">${coupon ? "Cupom aplicado" : ""}</p>
+        ${
+          coupon
+            ? `
+          <div class="flex items-center justify-between gap-2 mt-2">
+            <p id="coupon-feedback" class="text-xs text-green-600">Cupom aplicado</p>
+            <button id="coupon-remove" type="button" aria-label="Remover cupom"
+                    class="flex items-center gap-1 text-xs text-red-500 bg-red-50 hover:bg-red-100 border border-red-200 rounded-full pl-2 pr-2.5 py-1 transition-colors shrink-0">
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+              </svg>
+              Remover
+            </button>
+          </div>
+        `
+            : `<p id="coupon-feedback" class="text-xs mt-1"></p>`
+        }
       </div>
 
       <div class="border-t border-secondary/20 pt-4 flex justify-between items-baseline mb-4">
-        <span class="text-sm text-text/60">Total</span>
+        <span class="text-sm text-text/70">Total</span>
         <span id="summary-total" class="text-lg font-bold text-primary">R$ ${total.toFixed(2)}</span>
       </div>
 
@@ -161,13 +178,6 @@ function orderSummary(cartItems) {
       </button>
     </aside>
   `;
-}
-
-function calculateTotal(cartItems) {
-  return cartItems.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0,
-  );
 }
 
 function setupInteractions(container, user, cartItems) {
@@ -196,6 +206,11 @@ function setupInteractions(container, user, cartItems) {
   const couponBtn = container.querySelector("#coupon-apply");
   couponBtn?.addEventListener("click", () =>
     applyCoupon(container, user, cartItems),
+  );
+
+  const couponRemoveBtn = container.querySelector("#coupon-remove");
+  couponRemoveBtn?.addEventListener("click", () =>
+    removeCoupon(container, user, cartItems),
   );
 
   const checkoutBtn = container.querySelector("#checkout-btn");
@@ -232,7 +247,7 @@ function updateQuantity(container, user, cartItems, item, newQty) {
     item.quantity = previousQty; // desfaz
     render(container, user, cartItems);
     store.setState({ cart: cartItems });
-    alert(err.message);
+    showToast(err.message, "error");
   });
 }
 
@@ -251,7 +266,7 @@ function removeItem(container, user, cartItems, item) {
     cartItems.splice(index, 0, item); // desfaz
     render(container, user, cartItems);
     store.setState({ cart: cartItems });
-    alert(err.message);
+    showToast(err.message, "error");
   });
 }
 
@@ -275,4 +290,9 @@ async function applyCoupon(container, user, cartItems) {
   }
 
   render(container, user, cartItems); // só re-renderiza, não precisa re-fetch
+}
+
+function removeCoupon(container, user, cartItems) {
+  setAppliedCouponCode(null);
+  render(container, user, cartItems);
 }

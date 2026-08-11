@@ -1,5 +1,6 @@
 import { navigate } from "../router.js";
 import { productService } from "../services/product.js";
+import { escapeHtml } from "../utils/html.js";
 
 function debounce(fn, delay) {
   let timeoutId;
@@ -105,8 +106,8 @@ class SearchBar extends HTMLElement {
           data-id="${p.id}"
           aria-selected="${i === this.activeIndex}"
           class="px-4 py-2 text-sm cursor-pointer flex justify-between items-center ${i === this.activeIndex ? "bg-primary/10 text-primary" : "text-text hover:bg-primary/5"}">
-        <span>${p.name}</span>
-        <span class="text-xs text-secondary">R$ ${Number(p.price).toFixed(2)}</span>
+        <span>${escapeHtml(p.name)}</span>
+        <span class="text-xs text-text/70">R$ ${Number(p.price).toFixed(2)}</span>
       </li>
     `
     )

@@ -3,11 +3,12 @@ import { store } from "../state/store.js";
 import { navigate } from "../router.js";
 import { UFS } from "../utils/brazil-states.js";
 import { isSameAddress } from "../utils/address-utils.js";
+import { escapeHtml } from "../utils/html.js";
 
 export async function renderAddress(container) {
   const { user } = store.getState();
 
-  container.innerHTML = `<p class="min-h-screen flex flex-col justify-center text-center text-text/60 py-20">Carregando endereços...</p>`;
+  container.innerHTML = `<p class="min-h-screen flex flex-col justify-center text-center text-text/70 py-20">Carregando endereços...</p>`;
 
   let addresses = [];
   try {
@@ -25,7 +26,7 @@ function render(container, user, addresses, { showForm }) {
       <button id="back-to-cart" class="text-sm text-primary hover:underline mb-4">← Voltar ao carrinho</button>
 
       <h1 class="text-xl font-bold text-text mb-1">Endereço de entrega</h1>
-      <p class="text-sm text-text/60 mb-6">Escolha um endereço salvo ou cadastre um novo</p>
+      <p class="text-sm text-text/70 mb-6">Escolha um endereço salvo ou cadastre um novo</p>
 
       ${
         addresses.length > 0
@@ -45,22 +46,22 @@ function render(container, user, addresses, { showForm }) {
 
           <form id="address-form" class="flex flex-col gap-3">
             <div class="grid grid-cols-[1fr_100px] gap-3">
-              <input id="zipCode" required placeholder="CEP" maxlength="9"
+              <input id="zipCode" required placeholder="CEP" aria-label="CEP" maxlength="9"
                      class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
-              <select id="state" required
+              <select id="state" required aria-label="Estado (UF)"
                       class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text outline-none focus:border-primary transition-colors">
                 <option value="" disabled selected>UF</option>
                 ${UFS.map((uf) => `<option value="${uf}">${uf}</option>`).join("")}
               </select>
             </div>
 
-            <input id="city" required placeholder="Cidade"
+            <input id="city" required placeholder="Cidade" aria-label="Cidade"
                    class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
 
             <div class="grid grid-cols-[1fr_120px] gap-3">
-              <input id="street" required placeholder="Rua"
+              <input id="street" required placeholder="Rua" aria-label="Rua"
                      class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
-              <input id="number" required placeholder="Número"
+              <input id="number" required placeholder="Número" aria-label="Número"
                      class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
             </div>
 
@@ -71,7 +72,7 @@ function render(container, user, addresses, { showForm }) {
                 addresses.length > 0
                   ? `
                 <button type="button" id="cancel-new-address"
-                        class="text-text/60 hover:text-text text-sm px-2">
+                        class="text-text/70 hover:text-text text-sm px-2">
                   Cancelar
                 </button>
               `
@@ -102,8 +103,8 @@ function addressCard(addr) {
     <label class="flex items-start gap-3 border border-secondary/30 rounded-xl p-4 cursor-pointer hover:border-primary transition-colors">
       <input type="radio" name="selected-address" value="${addr.id}" class="mt-1 accent-primary" />
       <span class="text-sm text-text">
-        ${addr.street}, ${addr.number} — ${addr.city}/${addr.state}<br />
-        <span class="text-text/50">CEP ${addr.zipCode}</span>
+        ${escapeHtml(addr.street)}, ${escapeHtml(addr.number)} — ${escapeHtml(addr.city)}/${escapeHtml(addr.state)}<br />
+        <span class="text-text/70">CEP ${escapeHtml(addr.zipCode)}</span>
       </span>
     </label>
   `;

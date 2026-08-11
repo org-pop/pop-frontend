@@ -5,9 +5,9 @@ import { paymentService } from "../services/payment.js";
 import { store } from "../state/store.js";
 import { navigate } from "../router.js";
 import qrcode from "qrcode-generator";
-import { getCoupon, getAppliedCouponCode, computeCartTotals } from "../utils/coupons.js";
+import { getCoupon, getAppliedCouponCode, computeCartTotals, calculateSubtotal, SHIPPING_COST } from "../utils/coupons.js";
+import { escapeHtml } from "../utils/html.js";
 
-const SHIPPING_COST = 15.9; // mesmo valor fixo usado no cart.js
 const METHOD_LABELS = { PIX: "Pix", CARTAO: "Cartão", BOLETO: "Boleto" };
 const STORE_PIX_KEY = "+5511999894183"; // chave da loja — chave tipo telefone precisa do +55 na frente
 
@@ -18,7 +18,7 @@ export async function renderPayment(container) {
   const { user } = store.getState();
   createdOrder = null;
 
-  container.innerHTML = `<p class="min-h-screen flex flex-col justify-center text-center text-text/60 py-20">Carregando resumo do pedido...</p>`;
+  container.innerHTML = `<p class="min-h-screen flex flex-col justify-center text-center text-text/70 py-20">Carregando resumo do pedido...</p>`;
 
   try {
     const cartItems = await cartService.get(user.id);
@@ -43,10 +43,7 @@ export async function renderPayment(container) {
 }
 
 function render(container, user, cartItems) {
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0,
-  );
+  const subtotal = calculateSubtotal(cartItems);
   const couponCode = getAppliedCouponCode();
   const coupon = getCoupon(couponCode);
   const { discount, shipping, total } = computeCartTotals({ subtotal, shippingCost: SHIPPING_COST, coupon });
@@ -56,22 +53,22 @@ function render(container, user, cartItems) {
       <button id="back-link" class="text-sm text-primary hover:underline mb-4">← Voltar ao endereço</button>
 
       <h1 class="text-xl font-bold text-text mb-1">Pagamento</h1>
-      <p class="text-sm text-text/60 mb-6">Escolha como você quer pagar</p>
+      <p class="text-sm text-text/70 mb-6">Escolha como você quer pagar</p>
 
       <div class="border border-secondary/40 rounded-2xl bg-surface p-6 mb-6">
         <div class="flex justify-between text-sm mb-2">
-          <span class="text-text/60">Subtotal</span>
+          <span class="text-text/70">Subtotal</span>
           <span>R$ ${subtotal.toFixed(2)}</span>
         </div>
         <div class="flex justify-between text-sm mb-2">
-          <span class="text-text/60">Frete</span>
+          <span class="text-text/70">Frete</span>
           <span>${shipping === 0 ? "Grátis" : `R$ ${shipping.toFixed(2)}`}</span>
         </div>
         ${
           discount > 0
             ? `
           <div class="flex justify-between text-sm mb-2 text-primary">
-            <span>Desconto (${couponCode})</span>
+            <span>Desconto (${escapeHtml(couponCode)})</span>
             <span>− R$ ${discount.toFixed(2)}</span>
           </div>
         `
@@ -86,7 +83,7 @@ function render(container, user, cartItems) {
       <div class="border border-secondary/40 rounded-2xl bg-surface p-6">
         <p class="font-semibold text-primary text-sm mb-4">Forma de pagamento</p>
 
-        <div class="flex gap-2 mb-4" id="method-selector">
+        <div class="flex gap-2 mb-4" id="method-selector" role="radiogroup" aria-label="Forma de pagamento">
           ${Object.keys(METHOD_LABELS).map((m) => methodButton(m)).join("")}
         </div>
 
@@ -120,7 +117,7 @@ function preConfirmButtons() {
 function methodButton(value) {
   const active = selectedMethod === value;
   return `
-    <button type="button" data-method="${value}"
+    <button type="button" data-method="${value}" role="radio" aria-checked="${active}"
             class="px-4 py-2 rounded-full text-sm border transition-colors ${
               active
                 ? "bg-primary text-white border-primary"
@@ -133,26 +130,26 @@ function methodButton(value) {
 
 function methodDetails(method) {
   if (method === "PIX") {
-    return `<p class="text-sm text-text/60">Ao confirmar, você recebe um QR Code pra pagar com o app do seu banco.</p>`;
+    return `<p class="text-sm text-text/70">Ao confirmar, você recebe um QR Code pra pagar com o app do seu banco.</p>`;
   }
   if (method === "CARTAO") {
     return `
       <div class="flex flex-col gap-2">
-        <input placeholder="Número do cartão" maxlength="19"
+        <input placeholder="Número do cartão" aria-label="Número do cartão" maxlength="19"
                class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
         <div class="grid grid-cols-2 gap-2">
-          <input placeholder="Validade (MM/AA)" maxlength="5"
+          <input placeholder="Validade (MM/AA)" aria-label="Validade" maxlength="5"
                  class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
-          <input placeholder="CVV" maxlength="4"
+          <input placeholder="CVV" aria-label="CVV" maxlength="4"
                  class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
         </div>
-        <input placeholder="Nome impresso no cartão"
+        <input placeholder="Nome impresso no cartão" aria-label="Nome impresso no cartão"
                class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
       </div>
     `;
   }
   // BOLETO
-  return `<p class="text-sm text-text/60">Um boleto seria gerado com o valor total e vencimento em 3 dias úteis.</p>`;
+  return `<p class="text-sm text-text/70">Um boleto seria gerado com o valor total e vencimento em 3 dias úteis.</p>`;
 }
 
 function attachHandlers(container, user, total) {
@@ -198,7 +195,7 @@ async function handleConfirm(container, user, total) {
     await new Promise((resolve) => setTimeout(resolve, 1600));
 
     feedback.textContent = "Não foi possível concluir a compra.";
-    feedback.classList.remove("hidden", "text-text/60");
+    feedback.classList.remove("hidden", "text-text/70");
     feedback.classList.add("text-red-500");
 
     btn.disabled = false;
@@ -277,10 +274,10 @@ async function showPixQrCode(container, amount) {
   container.querySelector("#method-details").innerHTML = `
     <div class="flex flex-col items-center gap-3 py-2">
       <img src="${qrDataUrl}" alt="QR Code Pix para pagamento" class="rounded-lg border border-secondary/30" />
-      <p class="text-sm text-text/60">Escaneie com o app do seu banco</p>
+      <p class="text-sm text-text/70">Escaneie com o app do seu banco</p>
 
       <div class="w-full">
-        <label class="text-xs text-text/50 block mb-1">Pix Copia e Cola</label>
+        <label class="text-xs text-text/70 block mb-1">Pix Copia e Cola</label>
         <div class="flex gap-2">
           <input readonly value="${payload}"
                  class="flex-1 min-w-0 border border-secondary/40 rounded-lg px-3 py-2 text-xs bg-bg text-text/70" />

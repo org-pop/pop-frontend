@@ -1,4 +1,5 @@
 import { imageSrc } from "../utils/image.js";
+import { escapeHtml } from "../utils/html.js";
 
 // integrantes do grupo especial (mesma raridade de destaque) — preço deles
 // vem roxo pra chamar mais atenção que os produtos "comuns"
@@ -45,9 +46,9 @@ class ProductCard extends HTMLElement {
     this.innerHTML = `
       <a href="/product/${id}" data-link class="flex flex-col group cursor-pointer">
         <div class="aspect-square bg-surface overflow-hidden rounded-3xl ${highlighted ? "border-4 border-[#D4AF37] shadow-[0_0_16px_3px_rgba(212,175,55,0.65)]" : ""}">
-          <img src="${imageSrc(image)}" alt="${name}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          <img src="${imageSrc(image)}" alt="${escapeHtml(name)}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
         </div>
-        <p class="text-sm text-text mt-3 text-center">${name}</p>
+        <p class="text-sm text-text mt-3 text-center">${escapeHtml(name)}</p>
         <p class="text-sm text-center ${highlighted ? "text-primary font-medium" : "text-text/70"}">R$ ${Number(price).toFixed(2)}</p>
       </a>
     `;

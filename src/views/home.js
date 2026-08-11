@@ -1,6 +1,7 @@
 import { productService } from "../services/product.js";
 import { imageSrc } from "../utils/image.js";
 import { splitPinned } from "../utils/products.js";
+import { escapeHtml } from "../utils/html.js";
 import "../components/product-carousel.js";
 import "../components/hero-carousel.js";
 
@@ -78,7 +79,7 @@ export async function renderHome(container) {
       renderLarge(filtered.slice(0, 2));
     } else {
       largeGrid.innerHTML = `
-        <p class="col-span-full text-center text-text/50 py-10">
+        <p class="col-span-full text-center text-text/70 py-10">
           Nenhum produto encontrado para essa raridade.
         </p>
       `;
@@ -91,10 +92,10 @@ export async function renderHome(container) {
         (p) => `
         <a href="/product/${p.id}" data-link class="flex flex-col group w-64 sm:w-80">
           <div class="aspect-square bg-surface rounded-3xl overflow-hidden">
-            <img src="${imageSrc(p.imageUrl)}" alt="${p.imageAltText || p.name}"
+            <img src="${imageSrc(p.imageUrl)}" alt="${escapeHtml(p.imageAltText || p.name)}"
                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
           </div>
-          <p class="text-base font-semibold text-text mt-4 text-center">${p.name}</p>
+          <p class="text-base font-semibold text-text mt-4 text-center">${escapeHtml(p.name)}</p>
           <p class="text-base text-primary font-medium text-center">R$ ${Number(p.price).toFixed(2)}</p>
         </a>
       `,

@@ -1,4 +1,5 @@
 import { productService } from "../services/product.js";
+import { escapeHtml } from "../utils/html.js";
 import "../components/product-card.js";
 
 const GROUP_MEMBER_IMAGES = ["arakaki", "boregio", "edward", "lorraine"];
@@ -18,7 +19,7 @@ export function renderCatalog(container, params) {
     <section class="flex flex-col gap-10 max-w-5xl mx-auto px-6 py-10">
       <div class="flex items-center justify-between gap-4 flex-wrap">
         <h1 class="text-lg font-bold text-primary">
-          ${searchTerm ? `Resultados para "${searchTerm}"` : "Catálogo completo"}
+          ${searchTerm ? `Resultados para "${escapeHtml(searchTerm)}"` : "Catálogo completo"}
         </h1>
         ${filterDropdown()}
       </div>
@@ -169,8 +170,8 @@ function applyFilter(products, mode) {
 function renderGrid(grid, products, searchTerm) {
   if (products.length === 0) {
     grid.innerHTML = `
-      <p class="col-span-full text-center text-text/60">
-        Nenhum produto encontrado${searchTerm ? ` para "${searchTerm}"` : ""}.
+      <p class="col-span-full text-center text-text/70">
+        Nenhum produto encontrado${searchTerm ? ` para "${escapeHtml(searchTerm)}"` : ""}.
       </p>
     `;
     return;
@@ -181,9 +182,9 @@ function renderGrid(grid, products, searchTerm) {
       (p) => `
       <product-card
         data-id="${p.id}"
-        data-name="${p.name}"
+        data-name="${escapeHtml(p.name)}"
         data-price="${p.price}"
-        data-image="${p.imageUrl}">
+        data-image="${escapeHtml(p.imageUrl)}">
       </product-card>
     `,
     )

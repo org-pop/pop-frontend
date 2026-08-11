@@ -45,7 +45,7 @@ class SideMenu extends HTMLElement {
 
   renderShell() {
     this.innerHTML = `
-      <div id="side-menu-root" class="fixed inset-0 z-50 pointer-events-none" aria-hidden="true">
+      <div id="side-menu-root" class="fixed inset-0 z-50 pointer-events-none" aria-hidden="true" inert>
         <div id="side-menu-overlay"
              class="hc-fade absolute inset-0 bg-black/40 opacity-0 transition-opacity duration-300 ease-out">
         </div>
@@ -56,7 +56,7 @@ class SideMenu extends HTMLElement {
           <div class="flex items-center justify-between px-5 py-4 border-b border-secondary/20">
             <span class="text-lg font-black text-primary">POP.</span>
             <button type="button" id="side-menu-close" aria-label="Fechar menu"
-                    class="text-text/60 hover:text-primary transition-colors p-1">
+                    class="text-text/70 hover:text-primary transition-colors p-1">
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
@@ -89,6 +89,9 @@ class SideMenu extends HTMLElement {
 
     root.classList.toggle("pointer-events-none", !open);
     root.setAttribute("aria-hidden", String(!open));
+    // sem isso, o menu fechado ainda tem botões/links focáveis por Tab mesmo
+    // com aria-hidden — inert remove foco e interação de verdade, não só visual
+    root.toggleAttribute("inert", !open);
 
     overlay.classList.toggle("opacity-0", !open);
     overlay.classList.toggle("opacity-100", open);
