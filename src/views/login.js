@@ -1,4 +1,5 @@
 import { authService } from "../services/auth.js";
+import { userService } from "../services/user.js";
 import { store, normalizeUser } from "../state/store.js";
 import { navigate } from "../router.js";
 import { syncAccessibilityFromAccount } from "../utils/theme.js";
@@ -94,7 +95,7 @@ export function renderLogin(container, params) {
     if (step === "login") {
       try {
         const result = await authService.login(email, password);
-        onAuthSuccess(result);
+        await onAuthSuccess(result);
       } catch (err) {
         // login falhou: pode ser senha errada, mas na dúvida oferecemos o cadastro
         // (o backend não expõe se o e-mail existe sem estar autenticado, de propósito)
@@ -117,7 +118,7 @@ export function renderLogin(container, params) {
 
       try {
         const result = await authService.register(name, email, password);
-        onAuthSuccess(result);
+        await onAuthSuccess(result);
       } catch (err) {
         showMessage(err.message || "Erro ao criar conta.");
       }
@@ -125,13 +126,25 @@ export function renderLogin(container, params) {
     }
   }
 
-  function onAuthSuccess(result) {
+  async function onAuthSuccess(result) {
     // O AuthResponse traz `userId`; o resto do app espera `user.id`.
     const user = normalizeUser(result);
     localStorage.setItem("token", result.token);
     localStorage.setItem("user", JSON.stringify(user));
     store.setState({ user });
     syncAccessibilityFromAccount(user.id); // não bloqueia o redirect — aplica assim que voltar
+
+    // O AuthResponse não traz `role` — busca o perfil completo antes de navegar,
+    // senão um admin recém-logado pode ser barrado ao entrar direto em /admin.
+    try {
+      const full = await userService.getById(user.id);
+      const withRole = { ...user, role: full.role };
+      localStorage.setItem("user", JSON.stringify(withRole));
+      store.setState({ user: withRole });
+    } catch {
+      // segue sem role — usuário só não verá os recursos de admin
+    }
+
     navigate(redirectTo);
   }
 

@@ -1,4 +1,5 @@
-import { store } from "./state/store.js";
+import { store, isAdmin } from "./state/store.js";
+import { showToast } from "./components/toast.js";
 
 const routes = {};
 let container = null;
@@ -44,6 +45,12 @@ function handleRouteChange() {
 
   if (meta.requiresAuth && !store.getState().user) {
     navigate(`/login?redirect=${encodeURIComponent(path)}`);
+    return;
+  }
+
+  if (meta.requiresAdmin && !isAdmin(store.getState().user)) {
+    showToast("Acesso restrito a administradores.", "error");
+    navigate("/");
     return;
   }
 

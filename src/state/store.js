@@ -23,6 +23,11 @@ export function normalizeUser(u) {
   return { ...u, id: u.id ?? u.userId };
 }
 
+// aceita "ADMIN", "ROLE_ADMIN" etc. — não sabemos o formato exato que o backend usa
+export function isAdmin(user) {
+  return String(user?.role ?? "").toUpperCase().includes("ADMIN");
+}
+
 export const store = createStore({
   user: normalizeUser(JSON.parse(localStorage.getItem("user"))),
   cart: [],

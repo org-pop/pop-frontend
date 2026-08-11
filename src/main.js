@@ -2,6 +2,7 @@ import './css/main.css';
 import { bootstrapTheme, syncAccessibilityFromAccount } from './utils/theme.js';
 import { store } from './state/store.js';
 import { cartService } from './services/cart.js';
+import { userService } from './services/user.js';
 import "./components/nav-header.js";
 import "./components/site-footer.js";
 import "./components/side-menu.js";
@@ -23,6 +24,23 @@ async function bootstrapCart() {
 }
 bootstrapCart();
 
+// sessões salvas antes da correção do campo `role` (o AuthResponse do login não
+// traz esse campo) ficaram com o user sem role no localStorage — busca uma vez
+// no boot pra que o link de admin apareça sem precisar deslogar/logar de novo
+async function bootstrapRole() {
+  const { user } = store.getState();
+  if (!user || user.role) return;
+  try {
+    const full = await userService.getById(user.id);
+    const merged = { ...user, role: full.role };
+    localStorage.setItem("user", JSON.stringify(merged));
+    store.setState({ user: merged });
+  } catch {
+    // silencioso — mesmo padrão do bootstrapCart
+  }
+}
+bootstrapRole();
+
 // se a conta já tem alto-contraste/tamanho de fonte salvos (de outro dispositivo,
 // por ex.), aplica por cima do que tava em localStorage — só depois do primeiro
 // paint (bootstrapTheme já rodou), pra não gerar flash esperando a rede
@@ -41,6 +59,7 @@ import { renderAddress } from './views/address.js';
 import { renderPayment } from './views/payment.js';
 import { renderProfile } from './views/profile.js';
 import { renderProfileEdit } from './views/profile-edit.js';
+import { renderAdminProducts } from './views/admin-products.js';
 
 const app = document.getElementById('app');
 
@@ -54,5 +73,6 @@ registerRoute("/checkout/address", renderAddress, { requiresAuth: true });
 registerRoute("/checkout/payment", renderPayment, { requiresAuth: true });
 registerRoute("/profile", renderProfile, { requiresAuth: true });
 registerRoute("/profile/edit", renderProfileEdit, { requiresAuth: true });
+registerRoute("/admin/products", renderAdminProducts, { requiresAuth: true, requiresAdmin: true });
 
 initRouter(app);
