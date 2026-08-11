@@ -1,12 +1,8 @@
 import { addressService } from "../services/adress.js";
 import { store } from "../state/store.js";
 import { navigate } from "../router.js";
-
-const UFS = [
-  "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS",
-  "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC",
-  "SP", "SE", "TO",
-];
+import { UFS } from "../utils/brazil-states.js";
+import { isSameAddress } from "../utils/address-utils.js";
 
 export async function renderAddress(container) {
   const { user } = store.getState();
@@ -20,10 +16,10 @@ export async function renderAddress(container) {
     console.error(err);
   }
 
-  render(container, user, addresses);
+  render(container, user, addresses, { showForm: addresses.length === 0 });
 }
 
-function render(container, user, addresses) {
+function render(container, user, addresses, { showForm }) {
   container.innerHTML = `
     <section class="max-w-2xl mx-auto px-6 py-10 min-h-screen">
       <button id="back-to-cart" class="text-sm text-primary hover:underline mb-4">← Voltar ao carrinho</button>
@@ -34,49 +30,71 @@ function render(container, user, addresses) {
       ${
         addresses.length > 0
           ? `
-        <div class="flex flex-col gap-3 mb-8">
+        <div class="flex flex-col gap-3 mb-6">
           ${addresses.map((addr) => addressCard(addr)).join("")}
         </div>
       `
           : ""
       }
 
-      <div class="border border-secondary/40 rounded-2xl bg-surface p-6">
-        <p class="font-semibold text-primary text-sm mb-4">Novo endereço</p>
+      ${
+        showForm
+          ? `
+        <div class="border border-secondary/40 rounded-2xl bg-surface p-6">
+          <p class="font-semibold text-primary text-sm mb-4">Novo endereço</p>
 
-        <form id="address-form" class="flex flex-col gap-3">
-          <div class="grid grid-cols-[1fr_100px] gap-3">
-            <input id="zipCode" required placeholder="CEP" maxlength="9"
+          <form id="address-form" class="flex flex-col gap-3">
+            <div class="grid grid-cols-[1fr_100px] gap-3">
+              <input id="zipCode" required placeholder="CEP" maxlength="9"
+                     class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
+              <select id="state" required
+                      class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text outline-none focus:border-primary transition-colors">
+                <option value="" disabled selected>UF</option>
+                ${UFS.map((uf) => `<option value="${uf}">${uf}</option>`).join("")}
+              </select>
+            </div>
+
+            <input id="city" required placeholder="Cidade"
                    class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
-            <select id="state" required
-                    class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text outline-none focus:border-primary transition-colors">
-              <option value="" disabled selected>UF</option>
-              ${UFS.map((uf) => `<option value="${uf}">${uf}</option>`).join("")}
-            </select>
-          </div>
 
-          <input id="city" required placeholder="Cidade"
-                 class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
+            <div class="grid grid-cols-[1fr_120px] gap-3">
+              <input id="street" required placeholder="Rua"
+                     class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
+              <input id="number" required placeholder="Número"
+                     class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
+            </div>
 
-          <div class="grid grid-cols-[1fr_120px] gap-3">
-            <input id="street" required placeholder="Rua"
-                   class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
-            <input id="number" required placeholder="Número"
-                   class="border border-secondary rounded-full px-5 py-2.5 bg-bg text-text placeholder:text-text/40 outline-none focus:border-primary transition-colors" />
-          </div>
+            <p id="address-feedback" class="text-sm mt-1 hidden"></p>
 
-          <p id="address-feedback" class="text-sm mt-1 hidden"></p>
-
-          <button type="submit"
-                  class="w-full bg-primary hover:bg-accent text-white py-3 rounded-full mt-2 transition-colors">
-            Salvar e continuar
-          </button>
-        </form>
-      </div>
+            <div class="flex items-center gap-3 mt-2">
+              ${
+                addresses.length > 0
+                  ? `
+                <button type="button" id="cancel-new-address"
+                        class="text-text/60 hover:text-text text-sm px-2">
+                  Cancelar
+                </button>
+              `
+                  : ""
+              }
+              <button type="submit"
+                      class="flex-1 bg-primary hover:bg-accent text-white py-3 rounded-full transition-colors">
+                Salvar e continuar
+              </button>
+            </div>
+          </form>
+        </div>
+      `
+          : `
+        <button type="button" id="show-address-form" class="text-sm text-primary hover:underline">
+          + Adicionar novo endereço
+        </button>
+      `
+      }
     </section>
   `;
 
-  setupInteractions(container, user);
+  setupInteractions(container, user, addresses, showForm);
 }
 
 function addressCard(addr) {
@@ -91,7 +109,7 @@ function addressCard(addr) {
   `;
 }
 
-function setupInteractions(container, user) {
+function setupInteractions(container, user, addresses, showForm) {
   container.querySelector("#back-to-cart")?.addEventListener("click", () => navigate("/cart"));
 
   container.querySelectorAll('input[name="selected-address"]').forEach((radio) => {
@@ -103,8 +121,17 @@ function setupInteractions(container, user) {
     });
   });
 
+  container.querySelector("#show-address-form")?.addEventListener("click", () => {
+    render(container, user, addresses, { showForm: true });
+  });
+
+  container.querySelector("#cancel-new-address")?.addEventListener("click", () => {
+    render(container, user, addresses, { showForm: false });
+  });
+
   const form = container.querySelector("#address-form");
   const feedback = container.querySelector("#address-feedback");
+  if (!form) return;
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -116,6 +143,13 @@ function setupInteractions(container, user) {
       state: container.querySelector("#state").value,
       zipCode: container.querySelector("#zipCode").value.trim(),
     };
+
+    if (addresses.some((a) => isSameAddress(a, address))) {
+      feedback.textContent = "Esse endereço já está cadastrado.";
+      feedback.classList.remove("hidden");
+      feedback.classList.add("text-red-500");
+      return;
+    }
 
     try {
       const saved = await addressService.add(user.id, address);
