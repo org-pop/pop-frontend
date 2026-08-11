@@ -5,6 +5,7 @@ import { paymentService } from "../services/payment.js";
 import { store } from "../state/store.js";
 import { navigate } from "../router.js";
 import qrcode from "qrcode-generator";
+import { getCoupon, getAppliedCouponCode, computeCartTotals } from "../utils/coupons.js";
 
 const SHIPPING_COST = 15.9; // mesmo valor fixo usado no cart.js
 const METHOD_LABELS = { PIX: "Pix", CARTAO: "Cartão", BOLETO: "Boleto" };
@@ -46,7 +47,9 @@ function render(container, user, cartItems) {
     (sum, item) => sum + item.product.price * item.quantity,
     0,
   );
-  const total = subtotal + SHIPPING_COST;
+  const couponCode = getAppliedCouponCode();
+  const coupon = getCoupon(couponCode);
+  const { discount, shipping, total } = computeCartTotals({ subtotal, shippingCost: SHIPPING_COST, coupon });
 
   container.innerHTML = `
     <section class="max-w-2xl mx-auto px-6 py-10 min-h-screen">
@@ -60,10 +63,20 @@ function render(container, user, cartItems) {
           <span class="text-text/60">Subtotal</span>
           <span>R$ ${subtotal.toFixed(2)}</span>
         </div>
-        <div class="flex justify-between text-sm mb-4">
+        <div class="flex justify-between text-sm mb-2">
           <span class="text-text/60">Frete</span>
-          <span>R$ ${SHIPPING_COST.toFixed(2)}</span>
+          <span>${shipping === 0 ? "Grátis" : `R$ ${shipping.toFixed(2)}`}</span>
         </div>
+        ${
+          discount > 0
+            ? `
+          <div class="flex justify-between text-sm mb-2 text-primary">
+            <span>Desconto (${couponCode})</span>
+            <span>− R$ ${discount.toFixed(2)}</span>
+          </div>
+        `
+            : ""
+        }
         <div class="border-t border-secondary/20 pt-3 flex justify-between items-baseline">
           <span class="text-sm font-medium">Total</span>
           <span class="text-lg font-bold text-primary">R$ ${total.toFixed(2)}</span>

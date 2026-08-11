@@ -24,6 +24,8 @@ function render(container, product) {
 
   container.innerHTML = `
     <section class="max-w-5xl mx-auto px-6 py-10 min-h-screen">
+      <button id="back-link" type="button" class="text-sm text-primary hover:underline mb-6">← Voltar</button>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div class="aspect-square bg-surface rounded-3xl overflow-hidden">
           <img src="${imageSrc(product.imageUrl)}" alt="${product.imageAltText || product.name}" class="w-full h-full object-cover" />
@@ -71,6 +73,8 @@ function render(container, product) {
 }
 
 function setupInteractions(container, product) {
+  container.querySelector("#back-link").addEventListener("click", () => window.history.back());
+
   let qty = 1;
   const qtyValue = container.querySelector("#qty-value");
   const stockInfo = container.querySelector("#stock-info");

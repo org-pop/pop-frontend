@@ -3,6 +3,7 @@ import { productService } from "../services/product.js";
 import { store } from "../state/store.js";
 import { navigate } from "../router.js";
 import { imageSrc } from "../utils/image.js";
+import { getCoupon, getAppliedCouponCode, setAppliedCouponCode, computeCartTotals } from "../utils/coupons.js";
 
 export async function renderCart(container) {
   const { user } = store.getState();
@@ -30,9 +31,6 @@ async function enrichWithProductData(cartItems) {
     }),
   );
 }
-
-// estado local do cupom aplicado (não persiste, some ao recarregar a página)
-let appliedCoupon = null;
 
 const SHIPPING_COST = 15.9; // valor fixo por enquanto — trocar quando tiver cálculo real por CEP
 
@@ -112,9 +110,10 @@ function cartItemRow(item) {
 
 function orderSummary(cartItems) {
   const subtotal = calculateTotal(cartItems);
-  const shipping = SHIPPING_COST;
-  const discount = appliedCoupon?.value ?? 0;
-  const total = subtotal + shipping - discount;
+  const couponCode = getAppliedCouponCode();
+  const coupon = getCoupon(couponCode);
+  if (couponCode && !coupon) setAppliedCouponCode(null); // cupom não existe (mais) — limpa o resíduo
+  const { discount, shipping, total } = computeCartTotals({ subtotal, shippingCost: SHIPPING_COST, coupon });
 
   return `
     <aside class="border border-secondary/40 rounded-2xl bg-surface p-6 h-fit lg:sticky lg:top-6">
@@ -125,19 +124,30 @@ function orderSummary(cartItems) {
         <span id="summary-subtotal">R$ ${subtotal.toFixed(2)}</span>
       </div>
 
-      <div class="flex justify-between text-sm mb-4">
+      <div class="flex justify-between text-sm mb-2">
         <span class="text-text/60">Frete</span>
-        <span id="summary-shipping">R$ ${shipping.toFixed(2)}</span>
+        <span id="summary-shipping">${shipping === 0 ? "Grátis" : `R$ ${shipping.toFixed(2)}`}</span>
       </div>
+
+      ${
+        discount > 0
+          ? `
+        <div class="flex justify-between text-sm mb-2 text-primary">
+          <span>Desconto (${couponCode})</span>
+          <span id="summary-discount">− R$ ${discount.toFixed(2)}</span>
+        </div>
+      `
+          : ""
+      }
 
       <div class="mb-4">
         <label class="text-xs text-text/50 block mb-1">Cupom de desconto</label>
         <div class="flex gap-2">
-          <input id="coupon-input" type="text" placeholder="Digite o código"
+          <input id="coupon-input" type="text" placeholder="Digite o código" value="${coupon ? couponCode : ""}"
                  class="flex-1 min-w-0 border border-secondary/40 rounded-lg px-3 py-1.5 text-sm bg-bg" />
           <button id="coupon-apply" class="border border-secondary/40 rounded-lg px-3 text-sm text-primary hover:bg-secondary/10 transition-colors">Aplicar</button>
         </div>
-        <p id="coupon-feedback" class="text-xs mt-1"></p>
+        <p id="coupon-feedback" class="text-xs mt-1 ${coupon ? "text-green-600" : ""}">${coupon ? "Cupom aplicado" : ""}</p>
       </div>
 
       <div class="border-t border-secondary/20 pt-4 flex justify-between items-baseline mb-4">
@@ -254,14 +264,12 @@ async function applyCoupon(container, user, cartItems) {
 
   if (!code) return;
 
-  const knownCoupons = { POP10: 10 }; // placeholder — mock enquanto não existe backend
-
-  if (knownCoupons[code.toUpperCase()]) {
-    appliedCoupon = { code, value: knownCoupons[code.toUpperCase()] };
+  if (getCoupon(code)) {
+    setAppliedCouponCode(code);
     feedback.textContent = "Cupom aplicado";
     feedback.className = "text-xs mt-1 text-green-600";
   } else {
-    appliedCoupon = null;
+    setAppliedCouponCode(null);
     feedback.textContent = "Cupom inválido";
     feedback.className = "text-xs mt-1 text-red-500";
   }
