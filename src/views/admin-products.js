@@ -2,6 +2,11 @@ import { productService } from "../services/product.js";
 import { showToast } from "../components/toast.js";
 import { escapeHtml } from "../utils/html.js";
 import { imageSrc } from "../utils/image.js";
+import { RARITIES } from "../utils/products.js";
+
+// Único valor de franquia do catálogo — todo produto pertence à mesma turma,
+// então o campo fica travado em vez de editável.
+const FRANCHISE = "2°D";
 
 // img.src="" faz o navegador recarregar o próprio documento como imagem (pedido
 // vazio == URL do documento atual, pela spec) — usamos um pixel transparente
@@ -121,11 +126,39 @@ export function renderAdminProducts(container) {
     const existing = id ? products.find((p) => p.id === id) : null;
     openModal(formHtml(existing));
 
+    const preview = modalPanel.querySelector("#modal-image-preview");
+    const imageUrlInput = modalPanel.querySelector("#imageUrl");
+    const fileInput = modalPanel.querySelector("#modal-image-file");
+    let pickedObjectUrl = null; // revogado ao trocar/reabrir para não vazar memória
+
     modalPanel.querySelector("#modal-close").addEventListener("click", closeModal);
     modalPanel.querySelector("#modal-cancel").addEventListener("click", closeModal);
-    modalPanel.querySelector("#imageUrl").addEventListener("input", (e) => {
-      modalPanel.querySelector("#modal-image-preview").src = previewSrc(e.target.value.trim());
+
+    imageUrlInput.addEventListener("input", (e) => {
+      if (pickedObjectUrl) {
+        URL.revokeObjectURL(pickedObjectUrl);
+        pickedObjectUrl = null;
+      }
+      preview.src = previewSrc(e.target.value.trim());
     });
+
+    modalPanel.querySelector("#modal-image-pick").addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+
+      if (pickedObjectUrl) URL.revokeObjectURL(pickedObjectUrl);
+      pickedObjectUrl = URL.createObjectURL(file);
+      preview.src = pickedObjectUrl;
+
+      // A API só guarda o nome do arquivo (sem extensão) — a imagem em si
+      // precisa existir em public/images/<nome>.png, como já era feito na mão.
+      const baseName = file.name.replace(/\.[^./\\]+$/, "");
+      imageUrlInput.value = baseName;
+      modalPanel.querySelector("#modal-image-filename").textContent = file.name;
+    });
+
     modalPanel.querySelector("#admin-product-form").addEventListener("submit", (e) => handleSubmit(e, existing));
   }
 
@@ -150,7 +183,7 @@ export function renderAdminProducts(container) {
       stock: Number(form.stock.value),
       imageUrl: form.imageUrl.value.trim(),
       imageAltText: form.imageAltText.value.trim(),
-      franchise: form.franchise.value.trim(),
+      franchise: FRANCHISE,
       rarity: form.rarity.value.trim(),
     };
 
@@ -299,12 +332,23 @@ function formHtml(product) {
     </div>
 
     <form id="admin-product-form" class="flex flex-col gap-4">
-      <div class="flex items-center gap-4">
+      <div class="flex items-start gap-4">
         <div class="w-20 h-20 rounded-xl bg-bg overflow-hidden shrink-0 border border-secondary/40">
           <img id="modal-image-preview" src="${previewSrc(product?.imageUrl)}" alt="" class="w-full h-full object-cover" />
         </div>
-        <div class="flex-1">
+        <div class="flex-1 flex flex-col gap-2">
+          <input type="file" id="modal-image-file" accept="image/*" class="hidden" />
+          <div class="flex items-center gap-2">
+            <button type="button" id="modal-image-pick"
+                    class="border border-secondary/60 text-text hover:bg-secondary/10 px-4 py-2 rounded-full text-xs font-medium transition-colors shrink-0">
+              Escolher arquivo
+            </button>
+            <span id="modal-image-filename" class="text-xs text-text/60 truncate">Nenhum arquivo selecionado</span>
+          </div>
           ${formField("Imagem (nome do arquivo)", "imageUrl", product?.imageUrl, { placeholder: "ex: arakaki", required: true })}
+          <p class="text-[11px] text-text/50 leading-snug">
+            Ao escolher um arquivo, o nome acima é preenchido automaticamente. O arquivo de imagem ainda precisa existir em <code>public/images/</code> com esse nome.
+          </p>
         </div>
       </div>
 
@@ -323,8 +367,12 @@ function formHtml(product) {
       </div>
 
       <div class="grid grid-cols-2 gap-4">
-        ${formField("Franquia", "franchise", product?.franchise)}
-        ${formField("Raridade", "rarity", product?.rarity)}
+        <div class="flex flex-col gap-1.5">
+          <label for="franchise" class="text-xs font-medium text-text/70 uppercase tracking-wide">Franquia</label>
+          <input type="text" id="franchise" value="${FRANCHISE}" disabled
+                 class="rounded-xl px-4 py-2.5 border bg-secondary/10 border-secondary/40 text-text/70 cursor-not-allowed" />
+        </div>
+        ${selectField("Raridade", "rarity", product?.rarity, RARITIES)}
       </div>
 
       <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
@@ -349,6 +397,24 @@ function formField(label, id, value, { type = "text", placeholder, required = fa
              ${placeholder ? `placeholder="${escapeHtml(placeholder)}"` : ""}
              ${step ? `step="${step}"` : ""} ${min ? `min="${min}"` : ""} ${required ? "required" : ""}
              class="rounded-xl px-4 py-2.5 border bg-surface border-secondary/60 text-text focus:border-primary outline-none transition-colors" />
+    </div>
+  `;
+}
+
+function selectField(label, id, value, options) {
+  return `
+    <div class="flex flex-col gap-1.5">
+      <label for="${id}" class="text-xs font-medium text-text/70 uppercase tracking-wide">${label}</label>
+      <select id="${id}" name="${id}"
+              class="rounded-xl px-4 py-2.5 border bg-surface border-secondary/60 text-text focus:border-primary outline-none transition-colors">
+        <option value="" ${!value ? "selected" : ""}>Selecione...</option>
+        ${options
+          .map(
+            (opt) =>
+              `<option value="${escapeHtml(opt.value)}" ${opt.value === value ? "selected" : ""}>${escapeHtml(opt.label)}</option>`,
+          )
+          .join("")}
+      </select>
     </div>
   `;
 }

@@ -1,16 +1,11 @@
 import { productService } from "../services/product.js";
 import { imageSrc } from "../utils/image.js";
-import { splitPinned } from "../utils/products.js";
+import { splitPinned, RARITIES } from "../utils/products.js";
 import { escapeHtml } from "../utils/html.js";
 import "../components/product-carousel.js";
 import "../components/hero-carousel.js";
 
-const RARITY_FILTERS = [
-  { value: "all", label: "Todos" },
-  { value: "COMUM", label: "Comum" },
-  { value: "AURUDO", label: "Aurudo" },
-  { value: "GOD", label: "God" },
-];
+const RARITY_FILTERS = [{ value: "all", label: "Todos" }, ...RARITIES];
 
 export async function renderHome(container) {
   container.innerHTML = `
