@@ -1,5 +1,5 @@
 import './css/main.css';
-import { bootstrapTheme } from './utils/theme.js';
+import { bootstrapTheme, syncAccessibilityFromAccount } from './utils/theme.js';
 import { store } from './state/store.js';
 import { cartService } from './services/cart.js';
 import "./components/nav-header.js";
@@ -22,6 +22,16 @@ async function bootstrapCart() {
   }
 }
 bootstrapCart();
+
+// se a conta já tem alto-contraste/tamanho de fonte salvos (de outro dispositivo,
+// por ex.), aplica por cima do que tava em localStorage — só depois do primeiro
+// paint (bootstrapTheme já rodou), pra não gerar flash esperando a rede
+async function bootstrapAccessibility() {
+  const { user } = store.getState();
+  if (!user) return;
+  await syncAccessibilityFromAccount(user.id);
+}
+bootstrapAccessibility();
 import { renderHome } from './views/home.js';
 import { renderLogin } from './views/login.js';
 import { renderCatalog } from './views/catalog.js';

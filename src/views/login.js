@@ -1,6 +1,7 @@
 import { authService } from "../services/auth.js";
 import { store, normalizeUser } from "../state/store.js";
 import { navigate } from "../router.js";
+import { syncAccessibilityFromAccount } from "../utils/theme.js";
 
 const STEP_COPY = {
   login: {
@@ -129,6 +130,7 @@ export function renderLogin(container, params) {
     localStorage.setItem("token", result.token);
     localStorage.setItem("user", JSON.stringify(user));
     store.setState({ user });
+    syncAccessibilityFromAccount(user.id); // não bloqueia o redirect — aplica assim que voltar
     navigate(redirectTo);
   }
 
