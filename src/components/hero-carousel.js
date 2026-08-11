@@ -3,7 +3,7 @@ const FADE_DURATION = "duration-[1500ms]"; // animação lenta, como pedido
 
 class HeroCarousel extends HTMLElement {
   connectedCallback() {
-    this.images = ["/banner-guerreiras.png", "/banner-rodolfo.png"];
+    this.images = ["/images/banner-guerreiras.png", "/images/banner-rodolfo.png"];
     this.index = 0;
 
     // monta o DOM uma única vez — trocar de slide só alterna classes nos
